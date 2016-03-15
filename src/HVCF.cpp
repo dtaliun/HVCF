@@ -3,19 +3,17 @@
 namespace sph_umich_edu {
 
 constexpr char HVCF::SAMPLES_GROUP[];
-constexpr char HVCF::POPULATIONS_GROUP[];
 constexpr char HVCF::VARIANTS_GROUP[];
 constexpr char HVCF::HAPLOTYPES_GROUP[];
-constexpr char HVCF::SAMPLE_NAMES_DATASET[];
+constexpr char HVCF::SAMPLES_ALL_DATASET[];
 constexpr char HVCF::VARIANT_NAMES_DATASET[];
 
 HVCF::HVCF():
 		file_id(numeric_limits<hid_t>::min()),
 		samples_group_id(numeric_limits<hid_t>::min()),
-		populations_group_id(numeric_limits<hid_t>::min()),
 		variants_group_id(numeric_limits<hid_t>::min()),
 		haplotypes_group_id(numeric_limits<hid_t>::min()),
-		sample_names_dataset_id(numeric_limits<hid_t>::min()),
+		samples_all_dataset_id(numeric_limits<hid_t>::min()),
 		variant_names_dataset_id(numeric_limits<hid_t>::min()),
 		native_string_datatype_id(numeric_limits<hid_t>::min()) {
 
@@ -27,7 +25,7 @@ HVCF::~HVCF() {
 
 }
 
-hid_t HVCF::create_strings_dataset(const string& name, hid_t group_id, hsize_t chunk_size) {
+hid_t HVCF::create_strings_1D_dataset(const string& name, hid_t group_id, hsize_t chunk_size) throw (HVCFWriteException) {
 	hsize_t initial_dims[1]{0};
 	hsize_t maximum_dims[1]{H5S_UNLIMITED};
 	hsize_t chunk_dims[1]{chunk_size};
@@ -55,6 +53,34 @@ hid_t HVCF::create_strings_dataset(const string& name, hid_t group_id, hsize_t c
 	return dataset_id;
 }
 
+hid_t HVCF::create_ulong_1D_dataset(const string&name, hid_t group_id, hsize_t chunk_size) throw (HVCFWriteException) {
+	hsize_t initial_dims[1]{0};
+	hsize_t maximum_dims[1]{H5S_UNLIMITED};
+	hsize_t chunk_dims[1]{chunk_size};
+
+	hid_t dataspace_id = numeric_limits<hid_t>::min();
+	hid_t dataset_creation_plist = numeric_limits<hid_t>::min();
+	hid_t dataset_id = numeric_limits<hid_t>::min();
+
+	if ((dataspace_id = H5Screate_simple(1, initial_dims, maximum_dims)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, this->name.c_str());
+	}
+
+	if ((dataset_creation_plist = H5Pcreate(H5P_DATASET_CREATE)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, this->name.c_str());
+	}
+
+	H5Pset_chunk(dataset_creation_plist, 1, chunk_dims);
+	H5Pset_deflate(dataset_creation_plist, 9);
+
+	dataset_id = H5Dcreate(group_id, name.c_str(), H5T_NATIVE_ULONG, dataspace_id, H5P_DEFAULT, dataset_creation_plist, H5P_DEFAULT);
+
+	H5Pclose(dataset_creation_plist);
+	H5Sclose(dataspace_id);
+
+	return dataset_id;
+}
+
 void HVCF::create(const string& name) throw (HVCFWriteException) {
 	this->name = name;
 
@@ -63,10 +89,6 @@ void HVCF::create(const string& name) throw (HVCFWriteException) {
 	}
 
 	if ((samples_group_id = H5Gcreate(file_id, SAMPLES_GROUP, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
-	}
-
-	if ((populations_group_id = H5Gcreate(file_id, POPULATIONS_GROUP, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
 	}
 
@@ -83,18 +105,126 @@ void HVCF::create(const string& name) throw (HVCFWriteException) {
 	}
 	H5Tset_size(native_string_datatype_id, H5T_VARIABLE);
 
-	if ((sample_names_dataset_id = create_strings_dataset(SAMPLE_NAMES_DATASET, samples_group_id, 100)) < 0) {
+	if ((samples_all_dataset_id = create_strings_1D_dataset(SAMPLES_ALL_DATASET, samples_group_id, 100)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
 	}
 
-	if ((variant_names_dataset_id = create_strings_dataset(VARIANT_NAMES_DATASET, variants_group_id, 10000)) < 0) {
+	if ((variant_names_dataset_id = create_strings_1D_dataset(VARIANT_NAMES_DATASET, variants_group_id, 10000)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
 	}
 }
 
-void HVCF::write_samples(const string& name, const vector<string>& samples) throw (HVCFWriteException) {
+void HVCF::set_samples(const vector<string>& samples) throw (HVCFWriteException) {
+	hid_t file_dataspace_id = numeric_limits<hid_t>::min();
+	hid_t memory_dataspace_id = numeric_limits<hid_t>::min();
+	hsize_t mem_dims[1]{samples.size()};
+	hsize_t file_dims[1]{0};
+	hsize_t file_offset[1]{0};
+	const char* buffer[samples.size()];
 
+	for (unsigned int i = 0u; i < samples.size(); ++i) {
+		buffer[i] = samples.at(i).c_str();
+	}
 
+	file_dataspace_id = H5Dget_space(samples_all_dataset_id);
+	H5Sget_simple_extent_dims(file_dataspace_id, file_dims, nullptr);
+	H5Sclose(file_dataspace_id);
+
+	file_offset[0] = file_dims[0];
+	file_dims[0] += mem_dims[0];
+
+	if (H5Dset_extent(samples_all_dataset_id, file_dims) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
+	}
+
+	file_dataspace_id = H5Dget_space(samples_all_dataset_id);
+	memory_dataspace_id = H5Screate_simple(1, mem_dims, nullptr);
+
+	if (H5Sselect_hyperslab(file_dataspace_id, H5S_SELECT_SET, file_offset, nullptr, mem_dims, nullptr) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
+	}
+
+	if (H5Dwrite(samples_all_dataset_id, native_string_datatype_id, memory_dataspace_id, file_dataspace_id, H5P_DEFAULT, buffer) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
+	}
+
+	H5Sclose(memory_dataspace_id);
+	H5Sclose(file_dataspace_id);
+}
+
+void HVCF::set_population(const string& name, const vector<string>& samples) throw (HVCFWriteException) {
+	map<string, unsigned int> all_samples;
+	auto all_samples_it = all_samples.end();
+	unsigned long int buffer[samples.size()];
+	hid_t population_dataset_id = numeric_limits<hid_t>::min();
+	hid_t file_dataspace_id = numeric_limits<hid_t>::min();
+	hid_t memory_dataspace_id = numeric_limits<hid_t>::min();
+	hsize_t mem_dims[1]{samples.size()};
+	hsize_t file_dims[1]{samples.size()};
+	hsize_t file_offset[1]{0};
+
+	for (auto&& sample : get_samples()) {
+		all_samples.emplace(std::move(sample), all_samples.size());
+	}
+
+	for (unsigned int i = 0u; i < samples.size(); ++i) {
+		all_samples_it = all_samples.find(samples[i]);
+		if (all_samples_it == all_samples.end()) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Sample not found.");
+		}
+		buffer[i] = all_samples_it->second;
+	}
+
+	std::sort(buffer, buffer + samples.size(), std::less_equal<unsigned int>());
+
+	population_dataset_id = create_ulong_1D_dataset(name, samples_group_id, 100);
+
+	if (H5Dset_extent(population_dataset_id, file_dims) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
+	}
+
+	file_dataspace_id = H5Dget_space(population_dataset_id);
+	memory_dataspace_id = H5Screate_simple(1, mem_dims, nullptr);
+
+	if (H5Sselect_hyperslab(file_dataspace_id, H5S_SELECT_SET, file_offset, nullptr, mem_dims, nullptr) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
+	}
+
+	if (H5Dwrite(population_dataset_id, H5T_NATIVE_ULONG, memory_dataspace_id, file_dataspace_id, H5P_DEFAULT, buffer) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
+	}
+
+	H5Sclose(file_dataspace_id);
+	H5Sclose(memory_dataspace_id);
+	H5Dclose(population_dataset_id);
+}
+
+vector<string> HVCF::get_samples() throw (HVCFReadException) {
+	vector<string> samples;
+
+	hsize_t file_dims[1]{0};
+
+	hid_t file_dataspace_id = numeric_limits<hid_t>::min();
+
+	file_dataspace_id = H5Dget_space(samples_all_dataset_id);
+	H5Sget_simple_extent_dims(file_dataspace_id, file_dims, nullptr);
+	H5Sclose(file_dataspace_id);
+
+	char* buffer[file_dims[0]];
+
+	if (H5Dread(samples_all_dataset_id, native_string_datatype_id, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
+	}
+
+	for (unsigned int i = 0; i < file_dims[0]; ++i) {
+		samples.emplace_back(buffer[i]);
+	}
+
+	file_dataspace_id = H5Dget_space(samples_all_dataset_id);
+	H5Dvlen_reclaim(native_string_datatype_id, file_dataspace_id, H5P_DEFAULT, buffer);
+	H5Sclose(file_dataspace_id);
+
+	return samples;
 }
 
 void HVCF::open(const string& name) throw (HVCFOpenException) {
@@ -108,10 +238,6 @@ void HVCF::open(const string& name) throw (HVCFOpenException) {
 		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
 	}
 
-	if ((populations_group_id = H5Gopen(file_id, POPULATIONS_GROUP, H5P_DEFAULT)) < 0) {
-		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
-	}
-
 	if ((variants_group_id = H5Gopen(file_id, VARIANTS_GROUP, H5P_DEFAULT)) < 0) {
 		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
 	}
@@ -120,7 +246,7 @@ void HVCF::open(const string& name) throw (HVCFOpenException) {
 		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
 	}
 
-	if ((sample_names_dataset_id = H5Dopen(samples_group_id, SAMPLE_NAMES_DATASET, H5P_DEFAULT)) < 0) {
+	if ((samples_all_dataset_id = H5Dopen(samples_group_id, SAMPLES_ALL_DATASET, H5P_DEFAULT)) < 0) {
 		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
 	}
 
@@ -139,7 +265,7 @@ void HVCF::close() throw (HVCFCloseException) {
 		throw HVCFCloseException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
 	}
 
-	if (H5Dclose(sample_names_dataset_id) < 0) {
+	if (H5Dclose(samples_all_dataset_id) < 0) {
 		throw HVCFCloseException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
 	}
 
@@ -155,10 +281,6 @@ void HVCF::close() throw (HVCFCloseException) {
 		throw HVCFCloseException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
 	}
 
-	if (H5Gclose(populations_group_id) < 0) {
-		throw HVCFCloseException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
-	}
-
 	if (H5Gclose(samples_group_id) < 0) {
 		throw HVCFCloseException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
 	}
@@ -169,7 +291,6 @@ void HVCF::close() throw (HVCFCloseException) {
 
 	haplotypes_group_id = numeric_limits<hid_t>::min();
 	variants_group_id = numeric_limits<hid_t>::min();
-	populations_group_id = numeric_limits<hid_t>::min();
 	samples_group_id = numeric_limits<hid_t>::min();
 	file_id = numeric_limits<hid_t>::min();
 

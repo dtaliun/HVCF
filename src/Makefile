@@ -5,7 +5,7 @@ CXX = g++
 CXXFLAGS = -std=c++11 -Wall -O3 -L$(HDF5LIB)
 INCS = -I$(HDF5INCS)
 
-all: HVCF.o HVCFException.o HVCFOpenException.o HVCFCloseException.o HVCFWriteException.o
+all: HVCF.o HVCFException.o HVCFOpenException.o HVCFCloseException.o HVCFWriteException.o HVCFReadException.o
 
 .cpp.o:
 	$(CXX) $(CXXFLAGS) $(INCS) -c -o $@ $<
