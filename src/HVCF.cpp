@@ -53,7 +53,7 @@ hid_t HVCF::create_strings_1D_dataset(const string& name, hid_t group_id, hsize_
 	return dataset_id;
 }
 
-hid_t HVCF::create_ulong_1D_dataset(const string&name, hid_t group_id, hsize_t chunk_size) throw (HVCFWriteException) {
+hid_t HVCF::create_hsize_1D_dataset(const string&name, hid_t group_id, hsize_t chunk_size) throw (HVCFWriteException) {
 	hsize_t initial_dims[1]{0};
 	hsize_t maximum_dims[1]{H5S_UNLIMITED};
 	hsize_t chunk_dims[1]{chunk_size};
@@ -73,7 +73,7 @@ hid_t HVCF::create_ulong_1D_dataset(const string&name, hid_t group_id, hsize_t c
 	H5Pset_chunk(dataset_creation_plist, 1, chunk_dims);
 	H5Pset_deflate(dataset_creation_plist, 9);
 
-	dataset_id = H5Dcreate(group_id, name.c_str(), H5T_NATIVE_ULONG, dataspace_id, H5P_DEFAULT, dataset_creation_plist, H5P_DEFAULT);
+	dataset_id = H5Dcreate(group_id, name.c_str(), H5T_NATIVE_HSIZE, dataspace_id, H5P_DEFAULT, dataset_creation_plist, H5P_DEFAULT);
 
 	H5Pclose(dataset_creation_plist);
 	H5Sclose(dataspace_id);
@@ -155,7 +155,7 @@ void HVCF::set_samples(const vector<string>& samples) throw (HVCFWriteException)
 void HVCF::set_population(const string& name, const vector<string>& samples) throw (HVCFWriteException) {
 	map<string, unsigned int> all_samples;
 	auto all_samples_it = all_samples.end();
-	unsigned long int buffer[samples.size()];
+	hsize_t buffer[samples.size()];
 	hid_t population_dataset_id = numeric_limits<hid_t>::min();
 	hid_t file_dataspace_id = numeric_limits<hid_t>::min();
 	hid_t memory_dataspace_id = numeric_limits<hid_t>::min();
@@ -172,12 +172,12 @@ void HVCF::set_population(const string& name, const vector<string>& samples) thr
 		if (all_samples_it == all_samples.end()) {
 			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Sample not found.");
 		}
-		buffer[i] = all_samples_it->second;
+		buffer[i] = static_cast<hsize_t>(all_samples_it->second);
 	}
 
 	std::sort(buffer, buffer + samples.size(), std::less_equal<unsigned int>());
 
-	population_dataset_id = create_ulong_1D_dataset(name, samples_group_id, 100);
+	population_dataset_id = create_hsize_1D_dataset(name, samples_group_id, 100);
 
 	if (H5Dset_extent(population_dataset_id, file_dims) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
@@ -190,7 +190,7 @@ void HVCF::set_population(const string& name, const vector<string>& samples) thr
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
 	}
 
-	if (H5Dwrite(population_dataset_id, H5T_NATIVE_ULONG, memory_dataspace_id, file_dataspace_id, H5P_DEFAULT, buffer) < 0) {
+	if (H5Dwrite(population_dataset_id, H5T_NATIVE_HSIZE, memory_dataspace_id, file_dataspace_id, H5P_DEFAULT, buffer) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
 	}
 
@@ -222,6 +222,56 @@ vector<string> HVCF::get_samples() throw (HVCFReadException) {
 
 	file_dataspace_id = H5Dget_space(samples_all_dataset_id);
 	H5Dvlen_reclaim(native_string_datatype_id, file_dataspace_id, H5P_DEFAULT, buffer);
+	H5Sclose(file_dataspace_id);
+
+	return samples;
+}
+
+vector<string> HVCF::get_population(const string& name) throw (HVCFReadException) {
+	vector<string> samples;
+	hsize_t file_dims[1]{0};
+	hsize_t mem_dims[1]{0};
+	hid_t dataset_id = numeric_limits<hid_t>::min();
+	hid_t file_dataspace_id = numeric_limits<hid_t>::min();
+	hid_t mem_dataspace_id = numeric_limits<hid_t>::min();
+
+	if ((dataset_id = H5Dopen(samples_group_id, name.c_str(), H5P_DEFAULT)) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while opening dataset.");
+	}
+
+	file_dataspace_id = H5Dget_space(dataset_id);
+	H5Sget_simple_extent_dims(file_dataspace_id, file_dims, nullptr);
+	H5Sclose(file_dataspace_id);
+
+	mem_dims[0] = file_dims[0];
+
+	hsize_t index_buffer[file_dims[0]];
+	char* samples_buffer[file_dims[0]];
+
+	if (H5Dread(dataset_id, H5T_NATIVE_HSIZE, H5S_ALL, H5S_ALL, H5P_DEFAULT, index_buffer) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, this->name.c_str());
+	}
+
+	H5Dclose(dataset_id);
+
+	file_dataspace_id = H5Dget_space(samples_all_dataset_id);
+	if (H5Sselect_elements(file_dataspace_id, H5S_SELECT_SET, file_dims[0], index_buffer) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, this->name.c_str());
+	}
+
+	mem_dataspace_id = H5Screate_simple(1, mem_dims, nullptr);
+
+	if (H5Dread(samples_all_dataset_id, native_string_datatype_id, mem_dataspace_id, file_dataspace_id, H5P_DEFAULT, samples_buffer) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, this->name.c_str());
+	}
+
+	for (unsigned int i = 0; i < file_dims[0]; ++i) {
+		samples.emplace_back(samples_buffer[i]);
+	}
+
+	H5Dvlen_reclaim(native_string_datatype_id, mem_dataspace_id, H5P_DEFAULT, samples_buffer);
+
+	H5Sclose(mem_dataspace_id);
 	H5Sclose(file_dataspace_id);
 
 	return samples;

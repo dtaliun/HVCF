@@ -36,7 +36,7 @@ private:
 	static constexpr char VARIANT_NAMES_DATASET[] = "names";
 
 	hid_t create_strings_1D_dataset(const string& name, hid_t group_id, hsize_t chunk_size) throw (HVCFWriteException);
-	hid_t create_ulong_1D_dataset(const string&name, hid_t group_id, hsize_t chunk_size) throw (HVCFWriteException);
+	hid_t create_hsize_1D_dataset(const string&name, hid_t group_id, hsize_t chunk_size) throw (HVCFWriteException);
 
 public:
 	HVCF();
@@ -47,6 +47,7 @@ public:
 	void set_population(const string& name, const vector<string>& samples) throw (HVCFWriteException);
 
 	vector<string> get_samples() throw (HVCFReadException);
+	vector<string> get_population(const string& name) throw (HVCFReadException);
 
 	void open(const string& name) throw (HVCFOpenException);
 
