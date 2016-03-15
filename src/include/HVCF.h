@@ -22,14 +22,18 @@ private:
 	hid_t populations_group_id;
 	hid_t variants_group_id;
 	hid_t haplotypes_group_id;
+	hid_t sample_names_dataset_id;
+	hid_t variant_names_dataset_id;
+	hid_t native_string_datatype_id;
 
-	void open_datatypes() throw (std::exception);
-	void close_datatypes() throw (std::exception);
+	static constexpr char SAMPLES_GROUP[] = "samples";
+	static constexpr char POPULATIONS_GROUP[] = "populations";
+	static constexpr char VARIANTS_GROUP[] = "variants";
+	static constexpr char HAPLOTYPES_GROUP[] = "haplotypes";
+	static constexpr char SAMPLE_NAMES_DATASET[] = "names";
+	static constexpr char VARIANT_NAMES_DATASET[] = "names";
 
-	static constexpr char SAMPLES[] = "samples";
-	static constexpr char POPULATIONS[] = "populations";
-	static constexpr char VARIANTS[] = "variants";
-	static constexpr char HAPLOTYPES[] = "haplotypes";
+	hid_t create_strings_dataset(const string& name, hid_t group_id, hsize_t chunk_size);
 
 public:
 	HVCF();
