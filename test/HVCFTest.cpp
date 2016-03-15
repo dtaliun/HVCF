@@ -21,7 +21,7 @@ TEST_F(HVCFTest, Create) {
 	vector<string> samples{"sample1", "sample2", "sample3", "sample4", "sample5"};
 
 	hvcf.create("test.h5");
-	hvcf.write_samples("ALL", samples);
+	hvcf.set_samples(samples);
 	hvcf.close();
 
 	hvcf.open("test.h5");
