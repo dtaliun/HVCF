@@ -8,6 +8,7 @@
 #include <memory>
 #include <iterator>
 #include <algorithm>
+#include <chrono>
 #include "hdf5.h"
 #include "HVCFOpenException.h"
 #include "HVCFCloseException.h"
