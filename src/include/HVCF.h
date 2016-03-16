@@ -14,6 +14,11 @@
 #include "HVCFWriteException.h"
 #include "HVCFReadException.h"
 #include "HDF5FileIdentifier.h"
+#include "HDF5GroupIdentifier.h"
+#include "HDF5DatasetIdentifier.h"
+#include "HDF5DatatypeIdentifier.h"
+#include "HDF5DataspaceIdentifier.h"
+#include "HDF5PropertyIdentifier.h"
 
 using namespace std;
 
@@ -22,14 +27,14 @@ namespace sph_umich_edu {
 class HVCF {
 private:
 	string name;
-//	hid_t file_id;
+
 	HDF5FileIdentifier file_id;
-	hid_t samples_group_id;
-	hid_t variants_group_id;
-	hid_t haplotypes_group_id;
-	hid_t samples_all_dataset_id;
-	hid_t variant_names_dataset_id;
-	hid_t native_string_datatype_id;
+	HDF5GroupIdentifier samples_group_id;
+	HDF5GroupIdentifier variants_group_id;
+	HDF5GroupIdentifier haplotypes_group_id;
+	HDF5DatasetIdentifier samples_all_dataset_id;
+	HDF5DatasetIdentifier variant_names_dataset_id;
+	HDF5DatatypeIdentifier native_string_datatype_id;
 
 	static constexpr char SAMPLES_GROUP[] = "samples";
 	static constexpr char VARIANTS_GROUP[] = "variants";
@@ -53,8 +58,10 @@ public:
 
 	void open(const string& name) throw (HVCFOpenException);
 
-
 	void close() throw (HVCFCloseException);
+
+	unsigned int get_n_opened_objects() const;
+	static unsigned int get_n_all_opened_objects();
 };
 
 }

@@ -10,11 +10,20 @@ HDF5Identifier::~HDF5Identifier() throw (HVCFException) {
 
 }
 
+hid_t HDF5Identifier::operator=(hid_t indetifier) {
+	this->identifier = indetifier;
+	return this->identifier;
+}
+
+HDF5Identifier::operator hid_t() const {
+	return this->identifier;
+}
+
 void HDF5Identifier::set(hid_t identifier) {
 	this->identifier = identifier;
 }
 
-hid_t HDF5Identifier::get() {
+hid_t HDF5Identifier::get() const {
 	return identifier;
 }
 

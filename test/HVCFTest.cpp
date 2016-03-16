@@ -16,21 +16,54 @@ protected:
 };
 
 TEST_F(HVCFTest, Create) {
-	sph_umich_edu::HVCF hvcf;
-
 	vector<string> in_samples{"sample1", "sample2", "sample3", "sample4", "sample5"};
 	vector<string> in_pop1_samples{"sample5", "sample2", "sample3"};
 	vector<string> in_pop1_samples_ordered{"sample2", "sample3", "sample5"};
 
+	// test if all handlers are closed on exceptions
+	bool exception = false;
+	try {
+		sph_umich_edu::HVCF hvcf;
+		ASSERT_EQ(0u, hvcf.get_n_opened_objects());
+		ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+		hvcf.create("test.h5");
+		ASSERT_EQ(6u, hvcf.get_n_opened_objects());
+		ASSERT_EQ(7u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+		hvcf.set_samples(in_samples);
+		ASSERT_EQ(6u, hvcf.get_n_opened_objects());
+		ASSERT_EQ(7u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+		hvcf.set_population("", in_pop1_samples);
+	} catch (sph_umich_edu::HVCFWriteException &e) {
+		exception = true;
+	}
+	ASSERT_TRUE(exception);
+	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+
+	sph_umich_edu::HVCF hvcf;
+
+	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 	hvcf.create("test.h5");
+	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(7u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 	hvcf.set_samples(in_samples);
+	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
 	hvcf.set_population("POP1", in_pop1_samples);
+	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
 	hvcf.close();
+	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
 	hvcf.open("test.h5");
+	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(7u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 	vector<string> out_samples = std::move(hvcf.get_samples());
+	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
 	vector<string> out_pop1_samples_ordered = std::move(hvcf.get_population("POP1"));
+	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
 	hvcf.close();
+	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
 	ASSERT_EQ(in_samples.size(), out_samples.size());
 	for (unsigned int i = 0u; i < in_samples.size(); ++i) {

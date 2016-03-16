@@ -18,8 +18,16 @@ public:
 	HDF5Identifier();
 	virtual ~HDF5Identifier() throw (HVCFException);
 
+	HDF5Identifier(const HDF5Identifier& hdf5identifier) = delete;
+	HDF5Identifier& operator=(const HDF5Identifier& hdf5identifier) = delete;
+	HDF5Identifier(HDF5Identifier&& hdf5identifier) = delete;
+	HDF5Identifier& operator=(HDF5Identifier&& hdf5identifier) = delete;
+
+	hid_t operator=(hid_t identifier); //for assignment: avoids using set() every time.
+	operator hid_t() const; //for implicit/explicit conversion: avoids using get() every time.
+
 	void set(hid_t identifier);
-	hid_t get();
+	hid_t get() const;
 	virtual void close() throw (HVCFException) = 0;
 	hid_t release();
 

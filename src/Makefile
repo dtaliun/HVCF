@@ -12,6 +12,11 @@ all: HVCFException.o \
 	HVCFReadException.o \
 	HDF5Identifier.o \
 	HDF5FileIdentifier.o \
+	HDF5GroupIdentifier.o \
+	HDF5DatasetIdentifier.o \
+	HDF5DataspaceIdentifier.o \
+	HDF5DatatypeIdentifier.o \
+	HDF5PropertyIdentifier.o \
 	HVCF.o
 
 .cpp.o:

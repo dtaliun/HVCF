@@ -12,6 +12,8 @@ public:
 	HDF5FileIdentifier();
 	virtual ~HDF5FileIdentifier() throw (HVCFException);
 
+	using HDF5Identifier::operator=;
+
 	void close() throw (HVCFException);
 };
 
