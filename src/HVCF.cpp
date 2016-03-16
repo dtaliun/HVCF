@@ -9,7 +9,7 @@ constexpr char HVCF::SAMPLES_ALL_DATASET[];
 constexpr char HVCF::VARIANT_NAMES_DATASET[];
 
 HVCF::HVCF():
-		file_id(numeric_limits<hid_t>::min()),
+//		file_id(numeric_limits<hid_t>::min()),
 		samples_group_id(numeric_limits<hid_t>::min()),
 		variants_group_id(numeric_limits<hid_t>::min()),
 		haplotypes_group_id(numeric_limits<hid_t>::min()),
@@ -84,19 +84,24 @@ hid_t HVCF::create_hsize_1D_dataset(const string&name, hid_t group_id, hsize_t c
 void HVCF::create(const string& name) throw (HVCFWriteException) {
 	this->name = name;
 
-	if ((file_id = H5Fcreate(this->name.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
+//	if ((file_id = H5Fcreate(this->name.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
+//		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
+//	}
+
+	file_id.set(H5Fcreate(this->name.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT));
+	if (file_id.get() < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
 	}
 
-	if ((samples_group_id = H5Gcreate(file_id, SAMPLES_GROUP, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
+	if ((samples_group_id = H5Gcreate(file_id.get(), SAMPLES_GROUP, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
 	}
 
-	if ((variants_group_id = H5Gcreate(file_id, VARIANTS_GROUP, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
+	if ((variants_group_id = H5Gcreate(file_id.get(), VARIANTS_GROUP, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
 	}
 
-	if ((haplotypes_group_id = H5Gcreate(file_id, HAPLOTYPES_GROUP, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
+	if ((haplotypes_group_id = H5Gcreate(file_id.get(), HAPLOTYPES_GROUP, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
 	}
 
@@ -280,19 +285,24 @@ vector<string> HVCF::get_population(const string& name) throw (HVCFReadException
 void HVCF::open(const string& name) throw (HVCFOpenException) {
 	this->name = name;
 
-	if ((file_id = H5Fopen(this->name.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT)) < 0) {
+//	if ((file_id = H5Fopen(this->name.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT)) < 0) {
+//		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
+//	}
+
+	file_id.set(H5Fopen(this->name.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT));
+	if (file_id.get() < 0) {
 		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
 	}
 
-	if ((samples_group_id = H5Gopen(file_id, SAMPLES_GROUP, H5P_DEFAULT)) < 0) {
+	if ((samples_group_id = H5Gopen(file_id.get(), SAMPLES_GROUP, H5P_DEFAULT)) < 0) {
 		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
 	}
 
-	if ((variants_group_id = H5Gopen(file_id, VARIANTS_GROUP, H5P_DEFAULT)) < 0) {
+	if ((variants_group_id = H5Gopen(file_id.get(), VARIANTS_GROUP, H5P_DEFAULT)) < 0) {
 		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
 	}
 
-	if ((haplotypes_group_id = H5Gopen(file_id, HAPLOTYPES_GROUP, H5P_DEFAULT)) < 0) {
+	if ((haplotypes_group_id = H5Gopen(file_id.get(), HAPLOTYPES_GROUP, H5P_DEFAULT)) < 0) {
 		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
 	}
 
@@ -335,14 +345,15 @@ void HVCF::close() throw (HVCFCloseException) {
 		throw HVCFCloseException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
 	}
 
-	if (H5Fclose(file_id) < 0) {
-		throw HVCFCloseException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
-	}
+//	if (H5Fclose(file_id) < 0) {
+//		throw HVCFCloseException(__FILE__, __FUNCTION__, __LINE__, name.c_str());
+//	}
+	file_id.close();
 
 	haplotypes_group_id = numeric_limits<hid_t>::min();
 	variants_group_id = numeric_limits<hid_t>::min();
 	samples_group_id = numeric_limits<hid_t>::min();
-	file_id = numeric_limits<hid_t>::min();
+//	file_id = numeric_limits<hid_t>::min();
 
 	name.clear();
 }

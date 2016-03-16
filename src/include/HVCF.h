@@ -13,6 +13,7 @@
 #include "HVCFCloseException.h"
 #include "HVCFWriteException.h"
 #include "HVCFReadException.h"
+#include "HDF5FileIdentifier.h"
 
 using namespace std;
 
@@ -21,7 +22,8 @@ namespace sph_umich_edu {
 class HVCF {
 private:
 	string name;
-	hid_t file_id;
+//	hid_t file_id;
+	HDF5FileIdentifier file_id;
 	hid_t samples_group_id;
 	hid_t variants_group_id;
 	hid_t haplotypes_group_id;
