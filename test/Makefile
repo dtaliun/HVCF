@@ -3,8 +3,10 @@ GTESTINCS = /Users/dtaliun/Documents/gtest/googletest/include/
 HDF5LIB=/Users/dtaliun/Documents/hdf5-1.10.0-alpha1/hdf5/lib
 HDF5INCS=/Users/dtaliun/Documents/hdf5-1.10.0-alpha1/hdf5/include
 
-#AUXLIBS = ../../FileReader/src/*.o
-#AUXDIRS = ../../FileReader/src
+AUXLIBS = ../../auxc/FileReader/src/*.o \
+		../../auxc/MiniVCF/src/*.o
+AUXDIRS = ../../auxc/FileReader/src \
+		../../auxc/MiniVCF/src
 
 APPLIBS = ../src/*.o
 APPDIRS = ../src

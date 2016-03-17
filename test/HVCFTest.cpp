@@ -47,6 +47,7 @@ TEST_F(HVCFTest, Create) {
 	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
 	ASSERT_EQ(7u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 	hvcf.set_samples(in_samples);
+	ASSERT_EQ(5u, hvcf.get_n_samples());
 	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
 	hvcf.set_population("POP1", in_pop1_samples);
 	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
@@ -75,4 +76,34 @@ TEST_F(HVCFTest, Create) {
 		ASSERT_EQ(in_pop1_samples_ordered[i], out_pop1_samples_ordered[i]);
 	}
 
+}
+
+TEST_F(HVCFTest, WriteVCF) {
+	{ // 'dummy' scope to check if HVCF object closes every opened HDF5 identifier on its destruction
+		sph_umich_edu::HVCF hvcf;
+		sph_umich_edu::VCFReader vcf;
+
+		ASSERT_EQ(0u, hvcf.get_n_opened_objects());
+		ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+
+		vcf.open("1000G_phase3.EUR.chr20-22.10K.vcf.gz");
+		hvcf.create("test.h5");
+
+		hvcf.set_samples(std::move(vcf.get_variant().get_samples()));
+
+		ASSERT_EQ(503u, hvcf.get_n_samples());
+
+		ASSERT_EQ(6u, hvcf.get_n_opened_objects());
+		ASSERT_EQ(7u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+
+		while (vcf.read_next_variant()) {
+			hvcf.write_variant(vcf.get_variant());
+		}
+		vcf.close();
+
+		ASSERT_EQ(9u, hvcf.get_n_opened_objects());
+		ASSERT_EQ(10u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+	}
+
+	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }

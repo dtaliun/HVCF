@@ -81,6 +81,20 @@ hid_t HVCF::create_hsize_1D_dataset(const string&name, hid_t group_id, hsize_t c
 	return dataset_id.release();
 }
 
+hid_t HVCF::create_chromosome_group(const string& name) throw (HVCFWriteException) {
+	HDF5GroupIdentifier group_id;
+
+	if (name.length() == 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Empty dataspace name.");
+	}
+
+	if ((group_id = H5Gcreate(variants_group_id, name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating group.");
+	}
+
+	return group_id.release();
+}
+
 void HVCF::create(const string& name) throw (HVCFWriteException) {
 	this->name = name;
 
@@ -208,6 +222,30 @@ void HVCF::set_population(const string& name, const vector<string>& samples) thr
 	if (H5Dwrite(population_dataset_id, H5T_NATIVE_HSIZE, memory_dataspace_id, file_dataspace_id, H5P_DEFAULT, buffer) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while writing to dataset.");
 	}
+}
+
+void HVCF::write_variant(const Variant& variant) throw (HVCFWriteException) {
+	const string& chromosome = variant.get_chrom().get_value();
+
+	if (chromosomes.count(chromosome) == 0) {
+		auto result = chromosomes.emplace(chromosome, std::move(unique_ptr<HDF5GroupIdentifier>(new HDF5GroupIdentifier())));
+		result.first->second->set(create_chromosome_group(chromosome));
+	}
+}
+
+hsize_t HVCF::get_n_samples() throw (HVCFReadException) {
+	HDF5DataspaceIdentifier file_dataspace_id;
+	hsize_t file_dims[1]{0};
+
+	if ((file_dataspace_id = H5Dget_space(samples_all_dataset_id)) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while getting dataspace.");
+	}
+
+	if (H5Sget_simple_extent_dims(file_dataspace_id, file_dims, nullptr) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while getting dataspace dimensions.");
+	}
+
+	return file_dims[0];
 }
 
 vector<string> HVCF::get_samples() throw (HVCFReadException) {
@@ -341,6 +379,11 @@ void HVCF::open(const string& name) throw (HVCFOpenException) {
 
 void HVCF::close() throw (HVCFCloseException) {
 	native_string_datatype_id.close();
+
+	for (auto&& entry : chromosomes) {
+		entry.second->close();
+	}
+
 	samples_all_dataset_id.close();
 	variant_names_dataset_id.close();
 	haplotypes_group_id.close();
