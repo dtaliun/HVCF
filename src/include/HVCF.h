@@ -46,6 +46,7 @@ private:
 
 	hid_t create_strings_1D_dataset(const string& name, hid_t group_id, hsize_t chunk_size) throw (HVCFWriteException);
 	hid_t create_hsize_1D_dataset(const string& name, hid_t group_id, hsize_t chunk_size) throw (HVCFWriteException);
+	hid_t create_haplotypes_2D_dataset(const string& name, hid_t group_id, hsize_t variants_chunk_size, hsize_t samples_chunk_size) throw (HVCFWriteException);
 	hid_t create_chromosome_group(const string& name) throw (HVCFWriteException);
 
 	unordered_map<string, unique_ptr<HDF5GroupIdentifier>> chromosomes;

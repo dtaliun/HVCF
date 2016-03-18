@@ -81,8 +81,48 @@ hid_t HVCF::create_hsize_1D_dataset(const string&name, hid_t group_id, hsize_t c
 	return dataset_id.release();
 }
 
+hid_t HVCF::create_haplotypes_2D_dataset(const string& name, hid_t group_id, hsize_t variants_chunk_size, hsize_t samples_chunk_size) throw (HVCFWriteException) {
+	HDF5DataspaceIdentifier dataspace_id;
+	HDF5DatasetIdentifier dataset_id;
+	HDF5PropertyIdentifier dataset_property_id;
+
+	hsize_t n_samples = get_n_samples();
+	hsize_t n_haplotypes = n_samples + n_samples;
+
+	if (samples_chunk_size > n_haplotypes) {
+		samples_chunk_size = n_haplotypes;
+	}
+
+	hsize_t initial_dims[2]{0, n_haplotypes};
+	hsize_t maximum_dims[2]{H5S_UNLIMITED, n_haplotypes};
+	hsize_t chunk_dims[2]{variants_chunk_size, samples_chunk_size};
+
+	if (name.length() == 0u) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Empty dataset name.");
+	}
+
+	if ((dataspace_id = H5Screate_simple(2, initial_dims, maximum_dims)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataspace.");
+	}
+
+	if ((dataset_property_id = H5Pcreate(H5P_DATASET_CREATE)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataset property.");
+	}
+
+	if ((H5Pset_chunk(dataset_property_id, 2, chunk_dims) < 0) || (H5Pset_deflate(dataset_property_id, 9) < 0)) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
+	}
+
+	if ((dataset_id = H5Dcreate(group_id, name.c_str(), H5T_NATIVE_UCHAR, dataspace_id, H5P_DEFAULT, dataset_property_id, H5P_DEFAULT)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataset.");
+	}
+
+	return dataset_id.release();
+}
+
 hid_t HVCF::create_chromosome_group(const string& name) throw (HVCFWriteException) {
 	HDF5GroupIdentifier group_id;
+	HDF5DatasetIdentifier dataset_id;
 
 	if (name.length() == 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Empty dataspace name.");
@@ -91,6 +131,8 @@ hid_t HVCF::create_chromosome_group(const string& name) throw (HVCFWriteExceptio
 	if ((group_id = H5Gcreate(variants_group_id, name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating group.");
 	}
+
+	dataset_id = create_haplotypes_2D_dataset("haplotypes", group_id, 100000, 1000);
 
 	return group_id.release();
 }
