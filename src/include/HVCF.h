@@ -39,8 +39,8 @@ private:
 
 	static constexpr char SAMPLES_GROUP[] = "samples";
 	static constexpr char VARIANTS_GROUP[] = "variants";
-	static constexpr char HAPLOTYPES_GROUP[] = "haplotypes";
 	static constexpr char SAMPLES_ALL_DATASET[] = "ALL";
+	static constexpr char HAPLOTYPES_DATASET[] = "haplotypes";
 	static constexpr char VARIANT_NAMES_DATASET[] = "names";
 
 	hid_t create_strings_1D_dataset(const string& name, hid_t group_id, hsize_t chunk_size) throw (HVCFWriteException);

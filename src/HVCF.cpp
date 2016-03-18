@@ -4,8 +4,8 @@ namespace sph_umich_edu {
 
 constexpr char HVCF::SAMPLES_GROUP[];
 constexpr char HVCF::VARIANTS_GROUP[];
-constexpr char HVCF::HAPLOTYPES_GROUP[];
 constexpr char HVCF::SAMPLES_ALL_DATASET[];
+constexpr char HVCF::HAPLOTYPES_DATASET[];
 constexpr char HVCF::VARIANT_NAMES_DATASET[];
 
 HVCF::HVCF() {
@@ -132,7 +132,11 @@ hid_t HVCF::create_chromosome_group(const string& name) throw (HVCFWriteExceptio
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating group.");
 	}
 
-	dataset_id = create_haplotypes_2D_dataset("haplotypes", group_id, 100000, 1000);
+	dataset_id = create_haplotypes_2D_dataset(HAPLOTYPES_DATASET, group_id, 100000, 10000);
+	dataset_id.close();
+
+	dataset_id = create_strings_1D_dataset(VARIANT_NAMES_DATASET, group_id, 100000);
+	dataset_id.close();
 
 	return group_id.release();
 }
