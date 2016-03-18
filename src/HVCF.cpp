@@ -110,10 +110,6 @@ void HVCF::create(const string& name) throw (HVCFWriteException) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating group.");
 	}
 
-	if ((haplotypes_group_id = H5Gcreate(file_id, HAPLOTYPES_GROUP, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating group.");
-	}
-
 	if (((native_string_datatype_id = H5Tcopy(H5T_C_S1)) < 0) || (H5Tset_size(native_string_datatype_id, H5T_VARIABLE) < 0)) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating datatype.");
 	}
@@ -360,10 +356,6 @@ void HVCF::open(const string& name) throw (HVCFOpenException) {
 		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while opening group.");
 	}
 
-	if ((haplotypes_group_id = H5Gopen(file_id, HAPLOTYPES_GROUP, H5P_DEFAULT)) < 0) {
-		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while opening group.");
-	}
-
 	if ((samples_all_dataset_id = H5Dopen(samples_group_id, SAMPLES_ALL_DATASET, H5P_DEFAULT)) < 0) {
 		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while opening dataset.");
 	}
@@ -386,7 +378,6 @@ void HVCF::close() throw (HVCFCloseException) {
 
 	samples_all_dataset_id.close();
 	variant_names_dataset_id.close();
-	haplotypes_group_id.close();
 	variants_group_id.close();
 	samples_group_id.close();
 	file_id.close();
