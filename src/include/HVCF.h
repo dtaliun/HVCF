@@ -35,7 +35,6 @@ private:
 	HDF5GroupIdentifier samples_group_id;
 	HDF5GroupIdentifier variants_group_id;
 	HDF5DatasetIdentifier samples_all_dataset_id;
-	HDF5DatasetIdentifier variant_names_dataset_id;
 	HDF5DatatypeIdentifier native_string_datatype_id;
 
 	static constexpr char SAMPLES_GROUP[] = "samples";

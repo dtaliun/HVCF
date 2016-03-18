@@ -27,11 +27,11 @@ TEST_F(HVCFTest, Create) {
 		ASSERT_EQ(0u, hvcf.get_n_opened_objects());
 		ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 		hvcf.create("test.h5");
-		ASSERT_EQ(5u, hvcf.get_n_opened_objects());
-		ASSERT_EQ(6u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+		ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+		ASSERT_EQ(5u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 		hvcf.set_samples(in_samples);
-		ASSERT_EQ(5u, hvcf.get_n_opened_objects());
-		ASSERT_EQ(6u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+		ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+		ASSERT_EQ(5u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 		hvcf.set_population("", in_pop1_samples);
 	} catch (sph_umich_edu::HVCFWriteException &e) {
 		exception = true;
@@ -44,24 +44,24 @@ TEST_F(HVCFTest, Create) {
 	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 	hvcf.create("test.h5");
-	ASSERT_EQ(5u, hvcf.get_n_opened_objects());
-	ASSERT_EQ(6u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(5u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 	hvcf.set_samples(in_samples);
 	ASSERT_EQ(5u, hvcf.get_n_samples());
-	ASSERT_EQ(5u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
 	hvcf.set_population("POP1", in_pop1_samples);
-	ASSERT_EQ(5u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
 	hvcf.close();
 	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
 	hvcf.open("test.h5");
-	ASSERT_EQ(5u, hvcf.get_n_opened_objects());
-	ASSERT_EQ(6u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(5u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 	vector<string> out_samples = std::move(hvcf.get_samples());
-	ASSERT_EQ(5u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
 	vector<string> out_pop1_samples_ordered = std::move(hvcf.get_population("POP1"));
-	ASSERT_EQ(5u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
 	hvcf.close();
 	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
@@ -93,16 +93,16 @@ TEST_F(HVCFTest, WriteVCF) {
 
 		ASSERT_EQ(503u, hvcf.get_n_samples());
 
-		ASSERT_EQ(5u, hvcf.get_n_opened_objects());
-		ASSERT_EQ(6u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+		ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+		ASSERT_EQ(5u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
 		while (vcf.read_next_variant()) {
 			hvcf.write_variant(vcf.get_variant());
 		}
 		vcf.close();
 
-		ASSERT_EQ(8u, hvcf.get_n_opened_objects());
-		ASSERT_EQ(9u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+		ASSERT_EQ(7u, hvcf.get_n_opened_objects());
+		ASSERT_EQ(8u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 	}
 
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());

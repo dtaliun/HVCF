@@ -159,10 +159,6 @@ void HVCF::create(const string& name) throw (HVCFWriteException) {
 	if ((samples_all_dataset_id = create_strings_1D_dataset(SAMPLES_ALL_DATASET, samples_group_id, 1000)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataset.");
 	}
-
-	if ((variant_names_dataset_id = create_strings_1D_dataset(VARIANT_NAMES_DATASET, variants_group_id, 100000)) < 0) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataset.");
-	}
 }
 
 void HVCF::set_samples(const vector<string>& samples) throw (HVCFWriteException) {
@@ -402,10 +398,6 @@ void HVCF::open(const string& name) throw (HVCFOpenException) {
 		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while opening dataset.");
 	}
 
-	if ((variant_names_dataset_id = H5Dopen(variants_group_id, VARIANT_NAMES_DATASET, H5P_DEFAULT)) < 0) {
-		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while opening dataset.");
-	}
-
 	if (((native_string_datatype_id = H5Tcopy(H5T_C_S1)) < 0) || (H5Tset_size(native_string_datatype_id, H5T_VARIABLE) < 0)) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating datatype.");
 	}
@@ -419,7 +411,6 @@ void HVCF::close() throw (HVCFCloseException) {
 	}
 
 	samples_all_dataset_id.close();
-	variant_names_dataset_id.close();
 	variants_group_id.close();
 	samples_group_id.close();
 	file_id.close();
