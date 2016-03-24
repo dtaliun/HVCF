@@ -21,6 +21,7 @@
 #include "HDF5DatatypeIdentifier.h"
 #include "HDF5DataspaceIdentifier.h"
 #include "HDF5PropertyIdentifier.h"
+#include "IOBuffer.h"
 #include "../../../auxc/MiniVCF/src/include/VCFReader.h"
 
 using namespace std;
@@ -47,8 +48,10 @@ private:
 	hid_t create_hsize_1D_dataset(const string& name, hid_t group_id, hsize_t chunk_size) throw (HVCFWriteException);
 	hid_t create_haplotypes_2D_dataset(const string& name, hid_t group_id, hsize_t variants_chunk_size, hsize_t samples_chunk_size) throw (HVCFWriteException);
 	hid_t create_chromosome_group(const string& name) throw (HVCFWriteException);
+	void write_haplotypes(hid_t group_id, const unsigned char* buffer, unsigned int n_variants, unsigned int n_haplotypes) throw (HVCFWriteException);
 
 	unordered_map<string, unique_ptr<HDF5GroupIdentifier>> chromosomes;
+	unordered_map<string, unique_ptr<IOBuffer>> buffers;
 
 public:
 	HVCF();
@@ -58,6 +61,7 @@ public:
 	void set_samples(const vector<string>& samples) throw (HVCFWriteException);
 	void set_population(const string& name, const vector<string>& samples) throw (HVCFWriteException);
 	void write_variant(const Variant& variant) throw (HVCFWriteException);
+//	void flush_write_buffers() throw (HVCFWriteException);
 
 	hsize_t get_n_samples() throw (HVCFReadException);
 	vector<string> get_samples() throw (HVCFReadException);

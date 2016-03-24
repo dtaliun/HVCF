@@ -17,6 +17,7 @@ all: HVCFException.o \
 	HDF5DataspaceIdentifier.o \
 	HDF5DatatypeIdentifier.o \
 	HDF5PropertyIdentifier.o \
+	IOBuffer.o \
 	HVCF.o
 
 .cpp.o:
