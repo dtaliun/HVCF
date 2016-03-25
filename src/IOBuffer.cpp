@@ -8,14 +8,15 @@ IOBuffer::IOBuffer(unsigned int max_variants, unsigned int n_samples):
 		n_haplotypes(n_samples + n_samples),
 		haplotypes(nullptr),
 		names(nullptr),
+		positions(nullptr),
 		n_variants(0u) {
 
 	haplotypes = unique_ptr<unsigned char[]>(new unsigned char[n_haplotypes * max_variants]{});
 	names = unique_ptr<char*[]>(new char*[max_variants]{nullptr});
+	positions = unique_ptr<unsigned long long int[]>(new unsigned long long int[max_variants]{});
 }
 
 IOBuffer::~IOBuffer() {
-	cout << "Destroy IO BUffer!" << endl;
 	for (unsigned int i = 0u; i < max_variants; ++i) {
 		if (names[i] != nullptr) {
 			free(names[i]);
@@ -30,7 +31,6 @@ void IOBuffer::add_variant(const Variant& variant) throw (HVCFWriteException) {
 	}
 
 	if (variant.get_alt().get_values().size() != 1) { // Support only bi-allelic (for computing LD it is file, but must be extended).
-		cout << "Warning!" << endl;
 		return;
 	}
 
@@ -58,6 +58,8 @@ void IOBuffer::add_variant(const Variant& variant) throw (HVCFWriteException) {
 	strcat(name.get(), variant.get_alt().get_text().c_str());
 
 	names[n_variants] = name.release();
+
+	positions[n_variants] = variant.get_pos().get_value();
 
 	++n_variants;
 }
@@ -91,6 +93,10 @@ const unsigned char* IOBuffer::get_haplotypes_buffer() const {
 
 char* const* IOBuffer::get_names_buffer() const {
 	return names.get();
+}
+
+const unsigned long long int* IOBuffer::get_positions_buffer() const {
+	return positions.get();
 }
 
 bool IOBuffer::is_full() const {
