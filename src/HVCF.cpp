@@ -187,7 +187,7 @@ void HVCF::write_haplotypes(hid_t group_id, const unsigned char* buffer, unsigne
 	hsize_t file_offset[2]{0, 0};
 
 	if ((dataset_id = H5Dopen(group_id, HAPLOTYPES_DATASET, H5P_DEFAULT)) < 0) {
-		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while opening dataset.");
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while opening dataset.");
 	}
 
 	if ((file_dataspace_id = H5Dget_space(dataset_id)) < 0) {
@@ -235,7 +235,7 @@ void HVCF::write_names(hid_t group_id, char* const* buffer, unsigned int n_varia
 	hsize_t file_offset[1]{0};
 
 	if ((dataset_id = H5Dopen(group_id, VARIANT_NAMES_DATASET, H5P_DEFAULT)) < 0) {
-		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while opening dataset.");
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while opening dataset.");
 	}
 
 	if ((file_dataspace_id = H5Dget_space(dataset_id)) < 0) {
@@ -282,7 +282,7 @@ void HVCF::write_positions(hid_t group_id, const unsigned long long int* buffer,
 	hsize_t file_offset[1]{0};
 
 	if ((dataset_id = H5Dopen(group_id, VARIANT_POSITIONS_DATASET, H5P_DEFAULT)) < 0) {
-		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while opening dataset.");
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while opening dataset.");
 	}
 
 	if ((file_dataspace_id = H5Dget_space(dataset_id)) < 0) {
@@ -617,7 +617,7 @@ void HVCF::open(const string& name) throw (HVCFOpenException) {
 	}
 
 	if (((native_string_datatype_id = H5Tcopy(H5T_C_S1)) < 0) || (H5Tset_size(native_string_datatype_id, H5T_VARIABLE) < 0)) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating datatype.");
+		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while creating datatype.");
 	}
 
 	H5G_info_t variants_group_info;
@@ -627,12 +627,12 @@ void HVCF::open(const string& name) throw (HVCFOpenException) {
 	auto chromosomes_it = chromosomes.end();
 
 	if (H5Gget_info(variants_group_id, &variants_group_info) < 0) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while getting group information.");
+		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while getting group information.");
 	}
 
 	for (hsize_t i = 0; i < variants_group_info.nlinks; ++i) {
 		if (H5Oget_info_by_idx(variants_group_id, ".", H5_INDEX_NAME, H5_ITER_INC, i, &object_info, 0) < 0) {
-			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while getting object information.");
+			throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while getting object information.");
 		}
 
 		if (object_info.type != H5O_type_t::H5O_TYPE_GROUP) {
@@ -641,13 +641,13 @@ void HVCF::open(const string& name) throw (HVCFOpenException) {
 
 		object_name_length = H5Lget_name_by_idx(variants_group_id, ".", H5_INDEX_NAME, H5_ITER_INC, i, NULL, 0, H5P_DEFAULT);
 		if (object_name_length < 0) {
-			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while getting group name size.");
+			throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while getting group name size.");
 		}
 
 		object_name = unique_ptr<char[]>(new char[object_name_length + 1]{});
 
 		if (H5Lget_name_by_idx(variants_group_id, ".", H5_INDEX_NAME, H5_ITER_INC, i, object_name.get(), object_name_length + 1, H5P_DEFAULT) < 0) {
-			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while getting group name.");
+			throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while getting group name.");
 		}
 
 		chromosomes_it = chromosomes.emplace(object_name.get(), std::move(unique_ptr<HDF5GroupIdentifier>(new HDF5GroupIdentifier()))).first;
