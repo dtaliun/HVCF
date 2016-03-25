@@ -1,5 +1,5 @@
-#ifndef SRC_INCLUDE_IOBUFFER_H_
-#define SRC_INCLUDE_IOBUFFER_H_
+#ifndef SRC_INCLUDE_WRITEBUFFER_H_
+#define SRC_INCLUDE_WRITEBUFFER_H_
 
 #include <iostream>
 #include <memory>
@@ -11,7 +11,7 @@ using namespace std;
 
 namespace sph_umich_edu {
 
-class IOBuffer {
+class WriteBuffer {
 private:
 	unsigned int max_variants;
 	unsigned int n_samples;
@@ -24,8 +24,8 @@ private:
 	unsigned int n_variants;
 
 public:
-	IOBuffer(unsigned int max_variants, unsigned int n_samples);
-	virtual ~IOBuffer();
+	WriteBuffer(unsigned int max_variants, unsigned int n_samples);
+	virtual ~WriteBuffer();
 
 	void add_variant(const Variant& variant) throw (HVCFWriteException);
 	void reset();

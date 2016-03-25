@@ -99,7 +99,7 @@ TEST_F(HVCFTest, WriteVCF) {
 		while (vcf.read_next_variant()) {
 			hvcf.write_variant(vcf.get_variant());
 		}
-		hvcf.flush_write_buffers();
+		hvcf.flush_write_buffer();
 		vcf.close();
 
 		ASSERT_EQ(7u, hvcf.get_n_opened_objects());
@@ -107,4 +107,18 @@ TEST_F(HVCFTest, WriteVCF) {
 	}
 
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+
+	sph_umich_edu::HVCF hvcf;
+
+	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+
+	hvcf.open("test.h5");
+	ASSERT_EQ(7u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(8u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+
+	hvcf.close();
+	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+
 }

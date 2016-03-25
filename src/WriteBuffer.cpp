@@ -1,8 +1,8 @@
-#include "include/IOBuffer.h"
+#include "include/WriteBuffer.h"
 
 namespace sph_umich_edu {
 
-IOBuffer::IOBuffer(unsigned int max_variants, unsigned int n_samples):
+WriteBuffer::WriteBuffer(unsigned int max_variants, unsigned int n_samples):
 		max_variants(max_variants),
 		n_samples(n_samples),
 		n_haplotypes(n_samples + n_samples),
@@ -16,22 +16,18 @@ IOBuffer::IOBuffer(unsigned int max_variants, unsigned int n_samples):
 	positions = unique_ptr<unsigned long long int[]>(new unsigned long long int[max_variants]{});
 }
 
-IOBuffer::~IOBuffer() {
+WriteBuffer::~WriteBuffer() {
 	for (unsigned int i = 0u; i < max_variants; ++i) {
 		if (names[i] != nullptr) {
-			free(names[i]);
+			delete names[i];
 			names[i] = nullptr;
 		}
 	}
 }
 
-void IOBuffer::add_variant(const Variant& variant) throw (HVCFWriteException) {
+void WriteBuffer::add_variant(const Variant& variant) throw (HVCFWriteException) {
 	if (n_variants >= max_variants) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Memory buffer overflow while writing.");
-	}
-
-	if (variant.get_alt().get_values().size() != 1) { // Support only bi-allelic (for computing LD it is file, but must be extended).
-		return;
 	}
 
 	for (unsigned int s = 0u; s < variant.get_n_samples(); ++s) {
@@ -64,46 +60,45 @@ void IOBuffer::add_variant(const Variant& variant) throw (HVCFWriteException) {
 	++n_variants;
 }
 
-void IOBuffer::reset() {
+void WriteBuffer::reset() {
 	for (unsigned int i = 0u; i < n_variants; ++i) {
 		if (names[i] != nullptr) {
-			free(names[i]);
+			delete names[i];
 			names[i] = nullptr;
 		}
 	}
-
 	n_variants = 0u;
 }
 
-unsigned int IOBuffer::get_max_variants() const {
+unsigned int WriteBuffer::get_max_variants() const {
 	return max_variants;
 }
 
-unsigned int IOBuffer::get_n_variants() const {
+unsigned int WriteBuffer::get_n_variants() const {
 	return n_variants;
 }
 
-unsigned int IOBuffer::get_n_haplotypes() const {
+unsigned int WriteBuffer::get_n_haplotypes() const {
 	return n_haplotypes;
 }
 
-const unsigned char* IOBuffer::get_haplotypes_buffer() const {
+const unsigned char* WriteBuffer::get_haplotypes_buffer() const {
 	return haplotypes.get();
 }
 
-char* const* IOBuffer::get_names_buffer() const {
+char* const* WriteBuffer::get_names_buffer() const {
 	return names.get();
 }
 
-const unsigned long long int* IOBuffer::get_positions_buffer() const {
+const unsigned long long int* WriteBuffer::get_positions_buffer() const {
 	return positions.get();
 }
 
-bool IOBuffer::is_full() const {
+bool WriteBuffer::is_full() const {
 	return (n_variants >= max_variants);
 }
 
-bool IOBuffer::is_empty() const {
+bool WriteBuffer::is_empty() const {
 	return (n_variants == 0u);
 }
 

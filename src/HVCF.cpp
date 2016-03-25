@@ -443,15 +443,19 @@ void HVCF::set_population(const string& name, const vector<string>& samples) thr
 void HVCF::write_variant(const Variant& variant) throw (HVCFWriteException) {
 	const string& chromosome = variant.get_chrom().get_value();
 	auto chromosomes_it = chromosomes.end();
-	auto buffers_it = buffers.end();
+	auto buffers_it = write_buffers.end();
+
+	if (variant.get_alt().get_values().size() != 1) { // Support only bi-allelic (for computing LD it is file, but must be extended).
+		return;
+	}
 
 	if (chromosomes.count(chromosome) == 0) {
 		chromosomes_it = chromosomes.emplace(chromosome, std::move(unique_ptr<HDF5GroupIdentifier>(new HDF5GroupIdentifier()))).first;
-		buffers_it = buffers.emplace(chromosome, std::move(unique_ptr<IOBuffer>(new IOBuffer(999, get_n_samples())))).first;
+		buffers_it = write_buffers.emplace(chromosome, std::move(unique_ptr<WriteBuffer>(new WriteBuffer(1000, get_n_samples())))).first;
 		chromosomes_it->second->set(create_chromosome_group(chromosome));
 	} else {
 		chromosomes_it = chromosomes.find(chromosome);
-		buffers_it = buffers.find(chromosome);
+		buffers_it = write_buffers.find(chromosome);
 	}
 
 	if (buffers_it->second->is_full()) {
@@ -467,11 +471,11 @@ void HVCF::write_variant(const Variant& variant) throw (HVCFWriteException) {
 //	cout << chromosome << " " << variant.get_pos().get_value() << endl;
 }
 
-void HVCF::flush_write_buffers() throw (HVCFWriteException) {
-	auto buffer_it = buffers.end();
+void HVCF::flush_write_buffer() throw (HVCFWriteException) {
+	auto buffer_it = write_buffers.end();
 
 	for (auto&& entry : chromosomes) {
-		buffer_it = buffers.find(entry.first);
+		buffer_it = write_buffers.find(entry.first);
 		if (!buffer_it->second->is_empty()) {
 			write_haplotypes(entry.second->get(), buffer_it->second->get_haplotypes_buffer(), buffer_it->second->get_n_variants(), buffer_it->second->get_n_haplotypes());
 			write_names(entry.second->get(), buffer_it->second->get_names_buffer(), buffer_it->second->get_n_variants());
@@ -615,6 +619,43 @@ void HVCF::open(const string& name) throw (HVCFOpenException) {
 	if (((native_string_datatype_id = H5Tcopy(H5T_C_S1)) < 0) || (H5Tset_size(native_string_datatype_id, H5T_VARIABLE) < 0)) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating datatype.");
 	}
+
+	H5G_info_t variants_group_info;
+	H5O_info_t object_info;
+	hsize_t object_name_length = 0;
+	unique_ptr<char[]> object_name = nullptr;
+	auto chromosomes_it = chromosomes.end();
+
+	if (H5Gget_info(variants_group_id, &variants_group_info) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while getting group information.");
+	}
+
+	for (hsize_t i = 0; i < variants_group_info.nlinks; ++i) {
+		if (H5Oget_info_by_idx(variants_group_id, ".", H5_INDEX_NAME, H5_ITER_INC, i, &object_info, 0) < 0) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while getting object information.");
+		}
+
+		if (object_info.type != H5O_type_t::H5O_TYPE_GROUP) {
+			continue;
+		}
+
+		object_name_length = H5Lget_name_by_idx(variants_group_id, ".", H5_INDEX_NAME, H5_ITER_INC, i, NULL, 0, H5P_DEFAULT);
+		if (object_name_length < 0) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while getting group name size.");
+		}
+
+		object_name = unique_ptr<char[]>(new char[object_name_length + 1]{});
+
+		if (H5Lget_name_by_idx(variants_group_id, ".", H5_INDEX_NAME, H5_ITER_INC, i, object_name.get(), object_name_length + 1, H5P_DEFAULT) < 0) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while getting group name.");
+		}
+
+		chromosomes_it = chromosomes.emplace(object_name.get(), std::move(unique_ptr<HDF5GroupIdentifier>(new HDF5GroupIdentifier()))).first;
+		chromosomes_it->second->set(H5Gopen(variants_group_id, chromosomes_it->first.c_str(), H5P_DEFAULT));
+		if (chromosomes_it->second->get() < 0) {
+			throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while opening group.");
+		}
+	}
 }
 
 void HVCF::close() throw (HVCFCloseException) {
@@ -629,6 +670,14 @@ void HVCF::close() throw (HVCFCloseException) {
 	samples_group_id.close();
 	file_id.close();
 	name.clear();
+}
+
+hsize_t get_n_variants() throw (HVCFReadException) {
+	return 0;
+}
+
+hsize_t get_n_variants(const string& chromosome) throw (HVCFReadException) {
+	return 0;
 }
 
 unsigned int HVCF::get_n_opened_objects() const {
