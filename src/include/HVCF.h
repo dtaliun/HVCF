@@ -54,6 +54,8 @@ private:
 	void write_names(hid_t group_id, char* const* buffer, unsigned int n_variants) throw (HVCFWriteException);
 	void write_positions(hid_t group_id, const unsigned long long int* buffer, unsigned int n_variants) throw (HVCFWriteException);
 
+	unsigned long long int read_position(hid_t group_id, hsize_t index) throw (HVCFReadException);
+
 	unordered_map<string, unique_ptr<HDF5GroupIdentifier>> chromosomes;
 	unordered_map<string, unique_ptr<WriteBuffer>> write_buffers;
 
@@ -72,6 +74,8 @@ public:
 	vector<string> get_population(const string& name) throw (HVCFReadException);
 	hsize_t get_n_variants() throw (HVCFReadException);
 	hsize_t get_n_variants(const string& chromosome) throw (HVCFReadException);
+
+	int get_variant_index_by_pos(const string& chromosome, unsigned long long int position) throw (HVCFReadException);
 
 	void open(const string& name) throw (HVCFOpenException);
 

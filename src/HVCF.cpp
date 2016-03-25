@@ -319,6 +319,39 @@ void HVCF::write_positions(hid_t group_id, const unsigned long long int* buffer,
 	}
 }
 
+unsigned long long int HVCF::read_position(hid_t group_id, hsize_t index) throw (HVCFReadException) {
+	unsigned long long int position = 0ul;
+
+	HDF5DatasetIdentifier dataset_id;
+	HDF5DataspaceIdentifier file_dataspace_id;
+	HDF5DataspaceIdentifier memory_dataspace_id;
+
+	hsize_t file_offset[1]{index};
+	hsize_t mem_dims[1]{1};
+
+	if ((dataset_id = H5Dopen(group_id, VARIANT_POSITIONS_DATASET, H5P_DEFAULT)) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while opening dataset.");
+	}
+
+	if ((file_dataspace_id = H5Dget_space(dataset_id)) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while getting dataspace.");
+	}
+
+	if ((memory_dataspace_id = H5Screate_simple(1, mem_dims, nullptr)) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while creating memory dataspace.");
+	}
+
+	if (H5Sselect_hyperslab(file_dataspace_id, H5S_SELECT_SET, file_offset, NULL, mem_dims, NULL) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while making selection in dataspace.");
+	}
+
+	if (H5Dread(dataset_id, H5T_NATIVE_ULLONG, memory_dataspace_id, file_dataspace_id, H5P_DEFAULT, &position) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while reading from dataset");
+	}
+
+	return position;
+}
+
 void HVCF::create(const string& name) throw (HVCFWriteException) {
 	this->name = name;
 
@@ -707,6 +740,41 @@ hsize_t HVCF::get_n_variants(const string& chromosome) throw (HVCFReadException)
 	}
 
 	return file_dims[0];
+}
+
+int HVCF::get_variant_index_by_pos(const string& chromosome, unsigned long long int position) throw (HVCFReadException) {
+	auto chromosomes_it = chromosomes.find(chromosome);
+
+	if (chromosomes_it == chromosomes.end()) {
+		return -1;
+	}
+
+	hsize_t n_variants = get_n_variants(chromosomes_it->first);
+	hsize_t start_offset = 0;
+	hsize_t end_offset = n_variants - 1;
+	hsize_t mid_offset = 0;
+	unsigned long long int position_at_offset = 0ul;
+
+	do {
+		mid_offset = start_offset + (end_offset - start_offset) / 2;
+		position_at_offset = read_position(chromosomes_it->second->get(), mid_offset);
+
+		if (position == position_at_offset) {
+			return mid_offset;
+		}
+
+		if (start_offset == end_offset) {
+			break;
+		}
+
+		if (position < position_at_offset) {
+			end_offset = mid_offset - 1;
+		} else {
+			start_offset = mid_offset + 1;
+		}
+	} while (true);
+
+	return -1;
 }
 
 unsigned int HVCF::get_n_opened_objects() const {
