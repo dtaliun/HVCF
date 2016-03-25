@@ -99,6 +99,7 @@ TEST_F(HVCFTest, WriteVCF) {
 		while (vcf.read_next_variant()) {
 			hvcf.write_variant(vcf.get_variant());
 		}
+		hvcf.flush_write_buffers();
 		vcf.close();
 
 		ASSERT_EQ(7u, hvcf.get_n_opened_objects());

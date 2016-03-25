@@ -33,6 +33,7 @@ public:
 	unsigned int get_n_haplotypes() const;
 	const unsigned char* get_haplotypes_buffer() const;
 	bool is_full() const;
+	bool is_empty() const;
 };
 
 }

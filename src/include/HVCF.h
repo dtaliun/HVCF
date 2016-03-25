@@ -61,7 +61,7 @@ public:
 	void set_samples(const vector<string>& samples) throw (HVCFWriteException);
 	void set_population(const string& name, const vector<string>& samples) throw (HVCFWriteException);
 	void write_variant(const Variant& variant) throw (HVCFWriteException);
-//	void flush_write_buffers() throw (HVCFWriteException);
+	void flush_write_buffers() throw (HVCFWriteException);
 
 	hsize_t get_n_samples() throw (HVCFReadException);
 	vector<string> get_samples() throw (HVCFReadException);

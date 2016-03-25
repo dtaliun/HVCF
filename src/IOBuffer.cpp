@@ -57,4 +57,8 @@ bool IOBuffer::is_full() const {
 	return (n_variants >= max_variants);
 }
 
+bool IOBuffer::is_empty() const {
+	return (n_variants == 0u);
+}
+
 }

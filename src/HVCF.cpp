@@ -321,7 +321,7 @@ void HVCF::write_variant(const Variant& variant) throw (HVCFWriteException) {
 
 	if (chromosomes.count(chromosome) == 0) {
 		chromosomes_it = chromosomes.emplace(chromosome, std::move(unique_ptr<HDF5GroupIdentifier>(new HDF5GroupIdentifier()))).first;
-		buffers_it = buffers.emplace(chromosome, std::move(unique_ptr<IOBuffer>(new IOBuffer(1000, get_n_samples())))).first;
+		buffers_it = buffers.emplace(chromosome, std::move(unique_ptr<IOBuffer>(new IOBuffer(999, get_n_samples())))).first;
 		chromosomes_it->second->set(create_chromosome_group(chromosome));
 	} else {
 		chromosomes_it = chromosomes.find(chromosome);
@@ -337,6 +337,18 @@ void HVCF::write_variant(const Variant& variant) throw (HVCFWriteException) {
 	buffers_it->second->add_variant(variant);
 
 //	cout << chromosome << " " << variant.get_pos().get_value() << endl;
+}
+
+void HVCF::flush_write_buffers() throw (HVCFWriteException) {
+	auto buffer_it = buffers.end();
+
+	for (auto&& entry : chromosomes) {
+		buffer_it = buffers.find(entry.first);
+		if (!buffer_it->second->is_empty()) {
+			write_haplotypes(entry.second->get(), buffer_it->second->get_haplotypes_buffer(), buffer_it->second->get_n_variants(), buffer_it->second->get_n_haplotypes());
+			buffer_it->second->reset();
+		}
+	}
 }
 
 hsize_t HVCF::get_n_samples() throw (HVCFReadException) {
