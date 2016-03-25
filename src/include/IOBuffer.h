@@ -18,6 +18,7 @@ private:
 	unsigned int n_haplotypes;
 
 	unique_ptr<unsigned char[]> haplotypes;
+	unique_ptr<char*[]> names;
 
 	unsigned int n_variants;
 
@@ -32,6 +33,7 @@ public:
 	unsigned int get_n_variants() const;
 	unsigned int get_n_haplotypes() const;
 	const unsigned char* get_haplotypes_buffer() const;
+	char* const* get_names_buffer() const;
 	bool is_full() const;
 	bool is_empty() const;
 };
