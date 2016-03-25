@@ -672,12 +672,41 @@ void HVCF::close() throw (HVCFCloseException) {
 	name.clear();
 }
 
-hsize_t get_n_variants() throw (HVCFReadException) {
-	return 0;
+hsize_t HVCF::get_n_variants() throw (HVCFReadException) {
+	hsize_t total = 0;
+
+	for (auto&& entry : chromosomes) {
+		total += get_n_variants(entry.first);
+	}
+
+	return total;
 }
 
-hsize_t get_n_variants(const string& chromosome) throw (HVCFReadException) {
-	return 0;
+hsize_t HVCF::get_n_variants(const string& chromosome) throw (HVCFReadException) {
+	auto chromosomes_it = chromosomes.find(chromosome);
+
+	if (chromosomes_it == chromosomes.end()) {
+		return 0;
+	}
+
+	HDF5DatasetIdentifier dataset_id;
+	HDF5DataspaceIdentifier file_dataspace_id;
+
+	hsize_t file_dims[1]{0};
+
+	if ((dataset_id = H5Dopen(chromosomes_it->second->get(), VARIANT_NAMES_DATASET, H5P_DEFAULT)) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while opening dataset.");
+	}
+
+	if ((file_dataspace_id = H5Dget_space(dataset_id)) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while getting dataspace.");
+	}
+
+	if (H5Sget_simple_extent_dims(file_dataspace_id, file_dims, nullptr) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while getting dataspace dimensions.");
+	}
+
+	return file_dims[0];
 }
 
 unsigned int HVCF::get_n_opened_objects() const {

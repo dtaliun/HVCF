@@ -117,6 +117,15 @@ TEST_F(HVCFTest, WriteVCF) {
 	ASSERT_EQ(7u, hvcf.get_n_opened_objects());
 	ASSERT_EQ(8u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
+	ASSERT_EQ(0u, hvcf.get_n_variants("19"));
+	ASSERT_EQ(9930u, hvcf.get_n_variants("20"));
+	ASSERT_EQ(9941u, hvcf.get_n_variants("21"));
+	ASSERT_EQ(9959u, hvcf.get_n_variants("22"));
+	ASSERT_EQ(7u, hvcf.get_n_opened_objects());
+
+	ASSERT_EQ(29830u, hvcf.get_n_variants());
+	ASSERT_EQ(7u, hvcf.get_n_opened_objects());
+
 	hvcf.close();
 	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
