@@ -10,6 +10,8 @@ constexpr char HVCF::VARIANT_NAMES_DATASET[];
 constexpr char HVCF::VARIANT_POSITIONS_DATASET[];
 constexpr char HVCF::STRING_INDEX_KEY_TYPE[];
 constexpr char HVCF::ULL_INDEX_KEY_TYPE[];
+constexpr char HVCF::VARIANT_NAMES_INDEX[];
+constexpr char HVCF::VARIANT_POSITIONS_INDEX[];
 
 
 HVCF::HVCF() {
@@ -382,7 +384,7 @@ void HVCF::create_hash_ull_bucket(hid_t group_id, const string& hash, const vect
 	H5Tinsert(mem_type, "ull_value", HOFFSET(key, position), H5T_NATIVE_ULLONG);
 	H5Tinsert(mem_type, "offset", HOFFSET(key, location), H5T_NATIVE_HSIZE);
 
-	if ((index_group_id = H5Gopen(group_id, "position_index", H5P_DEFAULT)) < 0) {
+	if ((index_group_id = H5Gopen(group_id, VARIANT_POSITIONS_INDEX, H5P_DEFAULT)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while opening group.");
 	}
 
@@ -469,7 +471,7 @@ void HVCF::create_hash_string_bucket(hid_t group_id, const string& hash, const v
 	H5Tinsert(mem_type, "string_value", HOFFSET(key, name), native_string_datatype_id);
 	H5Tinsert(mem_type, "offset", HOFFSET(key, location), H5T_NATIVE_HSIZE);
 
-	if ((index_group_id = H5Gopen(group_id, "name_index", H5P_DEFAULT)) < 0) {
+	if ((index_group_id = H5Gopen(group_id, VARIANT_NAMES_INDEX, H5P_DEFAULT)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while opening group.");
 	}
 	if ((file_dataspace_id = H5Screate_simple(1, dims, NULL)) < 0) {
@@ -1014,7 +1016,7 @@ int HVCF::get_variant_index_by_pos_hash(const string& chromosome, unsigned long 
 		return -1;
 	}
 
-	if ((index_group_id = H5Gopen(chromosomes_it->second->get(), "position_index", H5P_DEFAULT)) < 0) {
+	if ((index_group_id = H5Gopen(chromosomes_it->second->get(), VARIANT_POSITIONS_INDEX, H5P_DEFAULT)) < 0) {
 		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while opening group.");
 	}
 
@@ -1083,7 +1085,7 @@ int HVCF::get_variant_index_by_name_hash(const string& chromosome, const string&
 		return -1;
 	}
 
-	if ((index_group_id = H5Gopen(chromosomes_it->second->get(), "name_index", H5P_DEFAULT)) < 0) {
+	if ((index_group_id = H5Gopen(chromosomes_it->second->get(), VARIANT_NAMES_INDEX, H5P_DEFAULT)) < 0) {
 		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while opening group.");
 	}
 
@@ -1217,7 +1219,7 @@ void HVCF::create_index(const string& chromosome) throw (HVCFWriteException) {
 
 	HDF5GroupIdentifier index_group_id;
 
-	if ((index_group_id = H5Gcreate(chromosomes_it->second->get(), "position_index", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
+	if ((index_group_id = H5Gcreate(chromosomes_it->second->get(), VARIANT_POSITIONS_INDEX, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating group.");
 	}
 
@@ -1301,7 +1303,7 @@ void HVCF::create_variantname_index(const string& chromosome) throw (HVCFWriteEx
 
 	HDF5GroupIdentifier index_group_id;
 
-	if ((index_group_id = H5Gcreate(chromosomes_it->second->get(), "name_index", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
+	if ((index_group_id = H5Gcreate(chromosomes_it->second->get(), VARIANT_NAMES_INDEX, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating group.");
 	}
 
