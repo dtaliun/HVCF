@@ -79,7 +79,7 @@ TEST_F(HVCFTest, DISABLED_Create) {
 
 }
 
-TEST_F(HVCFTest, DISABLED_WriteVCF) {
+TEST_F(HVCFTest, WriteVCF) {
 	{ // 'dummy' scope to check if HVCF object closes every opened HDF5 identifier on its destruction
 		sph_umich_edu::HVCF hvcf;
 		sph_umich_edu::VCFReader vcf;
@@ -101,6 +101,14 @@ TEST_F(HVCFTest, DISABLED_WriteVCF) {
 			hvcf.write_variant(vcf.get_variant());
 		}
 		hvcf.flush_write_buffer();
+
+		cout << "here1" << endl;
+
+		hvcf.create_index("20");
+		ASSERT_EQ(7u, hvcf.get_n_opened_objects());
+
+		cout << "here2" << endl;
+
 		vcf.close();
 
 		ASSERT_EQ(7u, hvcf.get_n_opened_objects());
@@ -174,6 +182,63 @@ TEST_F(HVCFTest, VariantByPosLookup) {
 	elapsed_seconds = end - start;
 	GTEST_LOG_(INFO) << "Index lookup by single position = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(7u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	end = std::chrono::system_clock::now();
+	ASSERT_LE(-1, hvcf.get_variant_index_by_pos_hash("20", 0ul));
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Bucket lookup by single position = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(7u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(0, hvcf.get_variant_index_by_pos_hash("20", 60343ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Bucket lookup by single position = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(7u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(6202, hvcf.get_variant_index_by_pos_hash("20", 263529ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Bucket lookup by single position = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(7u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(9929, hvcf.get_variant_index_by_pos_hash("20", 372328ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Bucket lookup by single position = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(7u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(-1, hvcf.get_variant_index_by_pos_hash("20", 372004ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Bucket lookup by single position = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(7u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(-1, hvcf.get_variant_index_by_pos_hash("20", 3372004ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Bucket lookup by single position = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(7u, hvcf.get_n_opened_objects());
+
+
+//	start = std::chrono::system_clock::now();
+//	end = std::chrono::system_clock::now();
+//	ASSERT_LE(0, hvcf.get_variant_index_by_pos_hash("20", 50000ul));
+//	elapsed_seconds = end - start;
+//	GTEST_LOG_(INFO) << "Bucket lookup by single position = " << elapsed_seconds.count() << " sec";
+//	ASSERT_EQ(7u, hvcf.get_n_opened_objects());
+//
+//	start = std::chrono::system_clock::now();
+//	end = std::chrono::system_clock::now();
+//	ASSERT_LE(0, hvcf.get_variant_index_by_pos_hash("20", 99999ul));
+//	elapsed_seconds = end - start;
+//	GTEST_LOG_(INFO) << "Bucket lookup by single position = " << elapsed_seconds.count() << " sec";
+//	ASSERT_EQ(7u, hvcf.get_n_opened_objects());
 
 	hvcf.close();
 	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
