@@ -49,6 +49,7 @@ private:
 	HDF5DatasetIdentifier samples_all_dataset_id;
 	HDF5DatatypeIdentifier native_string_datatype_id;
 
+	static constexpr unsigned int N_HASH_BUCKETS = 10000;
 	static constexpr char SAMPLES_GROUP[] = "samples";
 	static constexpr char VARIANTS_GROUP[] = "variants";
 	static constexpr char SAMPLES_ALL_DATASET[] = "ALL";

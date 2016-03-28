@@ -324,7 +324,7 @@ void HVCF::write_positions(hid_t group_id, const unsigned long long int* buffer,
 	}
 }
 
-void HVCF::create_positions_index_bucket(hid_t group_id, const string& hash, const vector<hsize_t>& offsets) throw (HVCFWriteException) {
+void HVCF::create_positions_index_bucket(hid_t chromosome_group_id, const string& hash, const vector<hsize_t>& offsets) throw (HVCFWriteException) {
 	HDF5DataspaceIdentifier file_dataspace_id;
 	HDF5DataspaceIdentifier memory_dataspace_id;
 	HDF5PropertyIdentifier dataset_property_id;
@@ -344,7 +344,7 @@ void HVCF::create_positions_index_bucket(hid_t group_id, const string& hash, con
 	hsize_t mem_dims[1]{offsets.size()};
 	unsigned long long int buffer[offsets.size()];
 
-	if ((dataset_id = H5Dopen(group_id, VARIANT_POSITIONS_DATASET, H5P_DEFAULT)) < 0) {
+	if ((dataset_id = H5Dopen(chromosome_group_id, VARIANT_POSITIONS_DATASET, H5P_DEFAULT)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while opening dataset.");
 	}
 
@@ -388,7 +388,7 @@ void HVCF::create_positions_index_bucket(hid_t group_id, const string& hash, con
 	H5Tinsert(mem_type, "ull_value", HOFFSET(ull_index_key_type, ull_value), H5T_NATIVE_ULLONG);
 	H5Tinsert(mem_type, "offset", HOFFSET(ull_index_key_type, offset), H5T_NATIVE_HSIZE);
 
-	if ((index_group_id = H5Gopen(group_id, VARIANT_POSITIONS_INDEX, H5P_DEFAULT)) < 0) {
+	if ((index_group_id = H5Gopen(chromosome_group_id, VARIANT_POSITIONS_INDEX, H5P_DEFAULT)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while opening group.");
 	}
 
@@ -409,7 +409,7 @@ void HVCF::create_positions_index_bucket(hid_t group_id, const string& hash, con
 	}
 }
 
-void HVCF::create_names_index_bucket(hid_t group_id, const string& hash, const vector<hsize_t>& offsets) throw (HVCFWriteException) {
+void HVCF::create_names_index_bucket(hid_t chromosome_group_id, const string& hash, const vector<hsize_t>& offsets) throw (HVCFWriteException) {
 	HDF5DataspaceIdentifier file_dataspace_id;
 	HDF5DataspaceIdentifier memory_dataspace_id;
 	HDF5PropertyIdentifier dataset_property_id;
@@ -429,7 +429,7 @@ void HVCF::create_names_index_bucket(hid_t group_id, const string& hash, const v
 	hsize_t mem_dims[1]{offsets.size()};
 	char* buffer[offsets.size()];
 
-	if ((dataset_id = H5Dopen(group_id, VARIANT_NAMES_DATASET, H5P_DEFAULT)) < 0) {
+	if ((dataset_id = H5Dopen(chromosome_group_id, VARIANT_NAMES_DATASET, H5P_DEFAULT)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while opening dataset.");
 	}
 
@@ -473,7 +473,7 @@ void HVCF::create_names_index_bucket(hid_t group_id, const string& hash, const v
 	H5Tinsert(mem_type, "string_value", HOFFSET(string_index_key_type, string_value), native_string_datatype_id);
 	H5Tinsert(mem_type, "offset", HOFFSET(string_index_key_type, offset), H5T_NATIVE_HSIZE);
 
-	if ((index_group_id = H5Gopen(group_id, VARIANT_NAMES_INDEX, H5P_DEFAULT)) < 0) {
+	if ((index_group_id = H5Gopen(chromosome_group_id, VARIANT_NAMES_INDEX, H5P_DEFAULT)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while opening group.");
 	}
 	if ((file_dataspace_id = H5Screate_simple(1, dims, NULL)) < 0) {
@@ -946,7 +946,7 @@ int HVCF::get_variant_index_by_position(const string& chromosome, unsigned long 
 		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while opening group.");
 	}
 
-	int hash = position % 1000;
+	int hash = position % N_HASH_BUCKETS;
 
 	hsize_t file_dims[1]{0};
 
@@ -1009,7 +1009,12 @@ int HVCF::get_variant_index_by_name(const string& chromosome, const string& name
 		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while opening group.");
 	}
 
-	hash_value = hash_function(name) % 1000;
+	hash_value = hash_function(name) % N_HASH_BUCKETS;
+
+	htri_t exists = H5Lexists(index_group_id, std::to_string(hash_value).c_str(), H5P_DEFAULT);
+	if (exists != true) {
+		return -1;
+	}
 
 	hsize_t file_dims[1]{0};
 
@@ -1119,7 +1124,7 @@ void HVCF::create_positions_index(const string& chromosome) throw (HVCFWriteExce
 		}
 
 		for (unsigned int i = 0; i < mem_dims[0]; ++i) {
-			hash = buffer[i] % 1000;
+			hash = buffer[i] % N_HASH_BUCKETS;
 			buckets_it = buckets.find(hash);
 			if (buckets_it == buckets.end()) {
 				buckets_it = buckets.emplace(hash, vector<hsize_t>()).first;
@@ -1199,7 +1204,7 @@ void HVCF::create_names_index(const string& chromosome) throw (HVCFWriteExceptio
 		}
 
 		for (unsigned int i = 0; i < mem_dims[0]; ++i) {
-			hash_value = hash_function(buffer[i]) % 1000;
+			hash_value = hash_function(buffer[i]) % N_HASH_BUCKETS;
 			buckets_it = buckets.find(hash_value);
 			if (buckets_it == buckets.end()) {
 				buckets_it = buckets.emplace(hash_value, vector<hsize_t>()).first;

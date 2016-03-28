@@ -136,7 +136,7 @@ TEST_F(HVCFTest, WriteVCF) {
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTest, VariantLookup) {
+TEST_F(HVCFTest, VariantLookupByPosition) {
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	std::chrono::duration<double> elapsed_seconds;
 	sph_umich_edu::HVCF hvcf;
@@ -192,6 +192,23 @@ TEST_F(HVCFTest, VariantLookup) {
 	elapsed_seconds = end - start;
 	GTEST_LOG_(INFO) << "Lookup by single position = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(7u, hvcf.get_n_opened_objects());
+
+	hvcf.close();
+	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+}
+
+TEST_F(HVCFTest, VariantLookupByName) {
+	std::chrono::time_point<std::chrono::system_clock> start, end;
+	std::chrono::duration<double> elapsed_seconds;
+	sph_umich_edu::HVCF hvcf;
+
+	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+
+	hvcf.open("test.h5");
+	ASSERT_EQ(7u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(8u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
 	ASSERT_EQ(-1, hvcf.get_variant_index_by_name("XYZ", "20:60343_G/A"));
 	ASSERT_EQ(7u, hvcf.get_n_opened_objects());
