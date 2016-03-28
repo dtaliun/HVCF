@@ -403,7 +403,7 @@ void HVCF::create_hash_ull_bucket(hid_t group_id, const string& hash, const vect
 unsigned long long int HVCF::read_position(hid_t group_id, hsize_t index) throw (HVCFReadException) {
 	unsigned long long int position = 0ul;
 
-	std::chrono::time_point<std::chrono::system_clock> start, end;
+//	std::chrono::time_point<std::chrono::system_clock> start, end;
 
 	HDF5DatasetIdentifier dataset_id;
 	HDF5DataspaceIdentifier file_dataspace_id;
@@ -412,7 +412,7 @@ unsigned long long int HVCF::read_position(hid_t group_id, hsize_t index) throw 
 	hsize_t file_offset[1]{index};
 	hsize_t mem_dims[1]{1};
 
-	start = std::chrono::system_clock::now();
+//	start = std::chrono::system_clock::now();
 
 	if ((dataset_id = H5Dopen(group_id, VARIANT_POSITIONS_DATASET, H5P_DEFAULT)) < 0) {
 		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while opening dataset.");
@@ -434,9 +434,9 @@ unsigned long long int HVCF::read_position(hid_t group_id, hsize_t index) throw 
 		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while reading from dataset");
 	}
 
-	end = std::chrono::system_clock::now();
-	std::chrono::duration<double> elapsed_seconds = end - start;
-	cout << elapsed_seconds.count() << " sec" << endl;
+//	end = std::chrono::system_clock::now();
+//	std::chrono::duration<double> elapsed_seconds = end - start;
+//	cout << elapsed_seconds.count() << " sec" << endl;
 
 	return position;
 }
@@ -470,6 +470,15 @@ void HVCF::create(const string& name) throw (HVCFWriteException) {
 	H5Tinsert(datatype_id, "Position", 0, H5T_NATIVE_ULLONG);
 	H5Tinsert(datatype_id, "Index", sizeof(unsigned long long int), H5T_NATIVE_HSIZE);
 	H5Tcommit(file_id, "position_index_key", datatype_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+	datatype_id.close();
+
+	size_t string_datatype_size = H5Tget_size(native_string_datatype_id);
+
+	datatype_id = H5Tcreate(H5T_COMPOUND, string_datatype_size + sizeof(hsize_t));
+	H5Tinsert(datatype_id, "Name", 0, native_string_datatype_id);
+	H5Tinsert(datatype_id, "Index", string_datatype_size, H5T_NATIVE_HSIZE);
+	H5Tcommit(file_id, "variantname_index_key", datatype_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 }
 
 void HVCF::set_samples(const vector<string>& samples) throw (HVCFWriteException) {
@@ -914,10 +923,10 @@ int HVCF::get_variant_index_by_pos_hash(const string& chromosome, unsigned long 
 	H5Tinsert(mem_type, "Index", HOFFSET(key, location), H5T_NATIVE_HSIZE);
 
 	H5Dread (dataset_id, mem_type, H5S_ALL, H5S_ALL, H5P_DEFAULT, keys_buffer);
-
-	for (unsigned int i = 0; i < file_dims[0]; ++i) {
-		cout << keys_buffer[i].position << " " << keys_buffer[i].location << endl;
-	}
+//
+//	for (unsigned int i = 0; i < file_dims[0]; ++i) {
+//		cout << keys_buffer[i].position << " " << keys_buffer[i].location << endl;
+//	}
 
 	auto result = lower_bound(keys_buffer, keys_buffer + file_dims[0], search_key,
 			[] (const key& f, const key& s) -> bool {
@@ -925,11 +934,11 @@ int HVCF::get_variant_index_by_pos_hash(const string& chromosome, unsigned long 
 			});
 
 	if ((result == keys_buffer + file_dims[0]) || (result->position != position)) {
-		cout << "Not found" << endl;
+//		cout << "Not found" << endl;
 		return -1;
 	}
 
-	cout << position << " Found at : " << result->location << endl;
+//	cout << position << " Found at : " << result->location << endl;
 
 	return result->location;
 }
@@ -1007,8 +1016,6 @@ void HVCF::create_index(const string& chromosome) throw (HVCFWriteException) {
 
 		memory_dataspace_id.close();
 	}
-
-	cout << "NUMBER OF BUCKETS: " << buckets.size() << endl;
 
 	HDF5GroupIdentifier index_group_id;
 

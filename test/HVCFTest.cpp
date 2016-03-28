@@ -102,12 +102,8 @@ TEST_F(HVCFTest, WriteVCF) {
 		}
 		hvcf.flush_write_buffer();
 
-		cout << "here1" << endl;
-
 		hvcf.create_index("20");
 		ASSERT_EQ(7u, hvcf.get_n_opened_objects());
-
-		cout << "here2" << endl;
 
 		vcf.close();
 
