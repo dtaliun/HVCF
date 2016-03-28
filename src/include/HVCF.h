@@ -56,6 +56,7 @@ private:
 	void write_positions(hid_t group_id, const unsigned long long int* buffer, unsigned int n_variants) throw (HVCFWriteException);
 
 	void create_hash_ull_bucket(hid_t group_id, const string& hash, const vector<hsize_t>& entries) throw (HVCFWriteException);
+	void create_hash_string_bucket(hid_t group_id, const string& hash, const vector<hsize_t>& entries) throw (HVCFWriteException);
 
 	unsigned long long int read_position(hid_t group_id, hsize_t index) throw (HVCFReadException);
 
@@ -80,6 +81,7 @@ public:
 
 	int get_variant_index_by_pos(const string& chromosome, unsigned long long int position) throw (HVCFReadException);
 	int get_variant_index_by_pos_hash(const string& chromosome, unsigned long long int position) throw (HVCFReadException);
+	int get_variant_index_by_name_hash(const string& chromosome, const string& name) throw (HVCFReadException);
 
 	void open(const string& name) throw (HVCFOpenException);
 
@@ -89,6 +91,7 @@ public:
 	static unsigned int get_n_all_opened_objects();
 
 	void create_index(const string& chromosome) throw (HVCFWriteException);
+	void create_variantname_index(const string& chromosome) throw (HVCFWriteException);
 };
 
 }

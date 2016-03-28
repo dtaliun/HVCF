@@ -105,6 +105,9 @@ TEST_F(HVCFTest, WriteVCF) {
 		hvcf.create_index("20");
 		ASSERT_EQ(7u, hvcf.get_n_opened_objects());
 
+		hvcf.create_variantname_index("20");
+		ASSERT_EQ(7u, hvcf.get_n_opened_objects());
+
 		vcf.close();
 
 		ASSERT_EQ(7u, hvcf.get_n_opened_objects());
@@ -221,20 +224,33 @@ TEST_F(HVCFTest, VariantByPosLookup) {
 	GTEST_LOG_(INFO) << "Bucket lookup by single position = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(7u, hvcf.get_n_opened_objects());
 
+	start = std::chrono::system_clock::now();
+	end = std::chrono::system_clock::now();
+	ASSERT_LE(-1, hvcf.get_variant_index_by_name_hash("20", "20:282263_T/A"));
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Bucket lookup by single name = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(7u, hvcf.get_n_opened_objects());
 
-//	start = std::chrono::system_clock::now();
-//	end = std::chrono::system_clock::now();
-//	ASSERT_LE(0, hvcf.get_variant_index_by_pos_hash("20", 50000ul));
-//	elapsed_seconds = end - start;
-//	GTEST_LOG_(INFO) << "Bucket lookup by single position = " << elapsed_seconds.count() << " sec";
-//	ASSERT_EQ(7u, hvcf.get_n_opened_objects());
-//
-//	start = std::chrono::system_clock::now();
-//	end = std::chrono::system_clock::now();
-//	ASSERT_LE(0, hvcf.get_variant_index_by_pos_hash("20", 99999ul));
-//	elapsed_seconds = end - start;
-//	GTEST_LOG_(INFO) << "Bucket lookup by single position = " << elapsed_seconds.count() << " sec";
-//	ASSERT_EQ(7u, hvcf.get_n_opened_objects());
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(0, hvcf.get_variant_index_by_name_hash("20", "20:60343_G/A"));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Bucket lookup by single name = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(7u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(6828, hvcf.get_variant_index_by_name_hash("20", "20:282218_C/CATGCAAGGCCCT"));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Bucket lookup by single name = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(7u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(9929, hvcf.get_variant_index_by_name_hash("20", "20:372328_G/A"));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Bucket lookup by single name = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(7u, hvcf.get_n_opened_objects());
 
 	hvcf.close();
 	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
