@@ -45,6 +45,8 @@ private:
 	static constexpr char HAPLOTYPES_DATASET[] = "haplotypes";
 	static constexpr char VARIANT_NAMES_DATASET[] = "names";
 	static constexpr char VARIANT_POSITIONS_DATASET[] = "positions";
+	static constexpr char STRING_INDEX_KEY_TYPE[] = "string_index_key_type";
+	static constexpr char ULL_INDEX_KEY_TYPE[] = "ull_index_key_type";
 
 	hid_t create_strings_1D_dataset(const string& name, hid_t group_id, hsize_t chunk_size) throw (HVCFWriteException);
 	hid_t create_hsize_1D_dataset(const string& name, hid_t group_id, hsize_t chunk_size) throw (HVCFWriteException);

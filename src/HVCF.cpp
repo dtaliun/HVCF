@@ -8,6 +8,9 @@ constexpr char HVCF::SAMPLES_ALL_DATASET[];
 constexpr char HVCF::HAPLOTYPES_DATASET[];
 constexpr char HVCF::VARIANT_NAMES_DATASET[];
 constexpr char HVCF::VARIANT_POSITIONS_DATASET[];
+constexpr char HVCF::STRING_INDEX_KEY_TYPE[];
+constexpr char HVCF::ULL_INDEX_KEY_TYPE[];
+
 
 HVCF::HVCF() {
 //	Disables automatic HDF5 error stack printing to stderr when function call returns negative value.
@@ -371,13 +374,13 @@ void HVCF::create_hash_ull_bucket(hid_t group_id, const string& hash, const vect
 		keys_buffer[i].location = entries[i];
 	}
 
-	index_key_type_id = H5Topen(file_id, "position_index_key", H5P_DEFAULT);
+	index_key_type_id = H5Topen(file_id, ULL_INDEX_KEY_TYPE, H5P_DEFAULT);
 
 	HDF5DatatypeIdentifier mem_type;
 
 	mem_type = H5Tcreate(H5T_COMPOUND, sizeof(key));
-	H5Tinsert(mem_type, "Position", HOFFSET(key, position), H5T_NATIVE_ULLONG);
-	H5Tinsert(mem_type, "Index", HOFFSET(key, location), H5T_NATIVE_HSIZE);
+	H5Tinsert(mem_type, "ull_value", HOFFSET(key, position), H5T_NATIVE_ULLONG);
+	H5Tinsert(mem_type, "offset", HOFFSET(key, location), H5T_NATIVE_HSIZE);
 
 	if ((index_group_id = H5Gopen(group_id, "position_index", H5P_DEFAULT)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while opening group.");
@@ -458,13 +461,13 @@ void HVCF::create_hash_string_bucket(hid_t group_id, const string& hash, const v
 				return (strcmp(f.name, s.name) < 0);
 	});
 
-	index_key_type_id = H5Topen(file_id, "variantname_index_key", H5P_DEFAULT);
+	index_key_type_id = H5Topen(file_id, STRING_INDEX_KEY_TYPE, H5P_DEFAULT);
 
 	HDF5DatatypeIdentifier mem_type;
 
 	mem_type = H5Tcreate(H5T_COMPOUND, sizeof(key));
-	H5Tinsert(mem_type, "Name", HOFFSET(key, name), native_string_datatype_id);
-	H5Tinsert(mem_type, "Index", HOFFSET(key, location), H5T_NATIVE_HSIZE);
+	H5Tinsert(mem_type, "string_value", HOFFSET(key, name), native_string_datatype_id);
+	H5Tinsert(mem_type, "offset", HOFFSET(key, location), H5T_NATIVE_HSIZE);
 
 	if ((index_group_id = H5Gopen(group_id, "name_index", H5P_DEFAULT)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while opening group.");
@@ -532,6 +535,9 @@ unsigned long long int HVCF::read_position(hid_t group_id, hsize_t index) throw 
 }
 
 void HVCF::create(const string& name) throw (HVCFWriteException) {
+	HDF5DatatypeIdentifier datatype_id;
+	size_t native_string_datatype_size = 0;
+
 	this->name = name;
 
 	if ((file_id = H5Fcreate(this->name.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
@@ -547,28 +553,54 @@ void HVCF::create(const string& name) throw (HVCFWriteException) {
 	}
 
 	if (((native_string_datatype_id = H5Tcopy(H5T_C_S1)) < 0) || (H5Tset_size(native_string_datatype_id, H5T_VARIABLE) < 0)) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating datatype.");
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating variable length string datatype.");
+	}
+
+	if ((native_string_datatype_size = H5Tget_size(native_string_datatype_id)) == 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while obtaining datatype size.");
 	}
 
 	if ((samples_all_dataset_id = create_strings_1D_dataset(SAMPLES_ALL_DATASET, samples_group_id, 1000)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataset.");
 	}
 
-	HDF5DatatypeIdentifier datatype_id;
+	// BEGIN: create and commit compound datatype.
+	if ((datatype_id = H5Tcreate(H5T_COMPOUND, sizeof(unsigned long long int) + sizeof(hsize_t))) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating compound datatype.");
+	}
 
-	datatype_id = H5Tcreate(H5T_COMPOUND, sizeof(unsigned long long int) + sizeof(hsize_t));
-	H5Tinsert(datatype_id, "Position", 0, H5T_NATIVE_ULLONG);
-	H5Tinsert(datatype_id, "Index", sizeof(unsigned long long int), H5T_NATIVE_HSIZE);
-	H5Tcommit(file_id, "position_index_key", datatype_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if (H5Tinsert(datatype_id, "ull_value", 0, H5T_NATIVE_ULLONG) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while adding new member to compound datatype.");
+	}
 
+	if (H5Tinsert(datatype_id, "offset", sizeof(unsigned long long int), H5T_NATIVE_HSIZE) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while adding new member to compound datatype.");
+	}
+
+	if (H5Tcommit(file_id, ULL_INDEX_KEY_TYPE, datatype_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while committing compound datatype.");
+	}
 	datatype_id.close();
+	// END: create and commit compound datatype.
 
-	size_t string_datatype_size = H5Tget_size(native_string_datatype_id);
+	// BEGIN: create and commit compound datatype.
+	if ((datatype_id = H5Tcreate(H5T_COMPOUND, native_string_datatype_size + sizeof(hsize_t))) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating compound datatype.");
+	}
 
-	datatype_id = H5Tcreate(H5T_COMPOUND, string_datatype_size + sizeof(hsize_t));
-	H5Tinsert(datatype_id, "Name", 0, native_string_datatype_id);
-	H5Tinsert(datatype_id, "Index", string_datatype_size, H5T_NATIVE_HSIZE);
-	H5Tcommit(file_id, "variantname_index_key", datatype_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if (H5Tinsert(datatype_id, "string_value", 0, native_string_datatype_id) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while adding new member to compound datatype.");
+	}
+
+	if (H5Tinsert(datatype_id, "offset", native_string_datatype_size, H5T_NATIVE_HSIZE) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while adding new member to compound datatype.");
+	}
+
+	if	(H5Tcommit(file_id, STRING_INDEX_KEY_TYPE, datatype_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while committing compound datatype.");
+	}
+	datatype_id.close();
+	// END: create and commit compound datatype.
 }
 
 void HVCF::set_samples(const vector<string>& samples) throw (HVCFWriteException) {
@@ -990,6 +1022,11 @@ int HVCF::get_variant_index_by_pos_hash(const string& chromosome, unsigned long 
 
 	hsize_t file_dims[1]{0};
 
+	htri_t exists = H5Lexists(index_group_id, std::to_string(hash).c_str(), H5P_DEFAULT);
+	if (exists != true) {
+		return -1;
+	}
+
 	dataset_id = H5Dopen(index_group_id, std::to_string(hash).c_str(), H5P_DEFAULT);
 	dataspace_id = H5Dget_space(dataset_id);
 	H5Sget_simple_extent_dims(dataspace_id, file_dims, NULL);
@@ -1008,8 +1045,8 @@ int HVCF::get_variant_index_by_pos_hash(const string& chromosome, unsigned long 
 	HDF5DatatypeIdentifier mem_type;
 
 	mem_type = H5Tcreate(H5T_COMPOUND, sizeof(key));
-	H5Tinsert(mem_type, "Position", HOFFSET(key, position), H5T_NATIVE_ULLONG);
-	H5Tinsert(mem_type, "Index", HOFFSET(key, location), H5T_NATIVE_HSIZE);
+	H5Tinsert(mem_type, "ull_value", HOFFSET(key, position), H5T_NATIVE_ULLONG);
+	H5Tinsert(mem_type, "offset", HOFFSET(key, location), H5T_NATIVE_HSIZE);
 
 	H5Dread (dataset_id, mem_type, H5S_ALL, H5S_ALL, H5P_DEFAULT, keys_buffer);
 //
@@ -1073,8 +1110,8 @@ int HVCF::get_variant_index_by_name_hash(const string& chromosome, const string&
 	HDF5DatatypeIdentifier mem_type;
 
 	mem_type = H5Tcreate(H5T_COMPOUND, sizeof(key));
-	H5Tinsert(mem_type, "Name", HOFFSET(key, name), native_string_datatype_id);
-	H5Tinsert(mem_type, "Index", HOFFSET(key, location), H5T_NATIVE_HSIZE);
+	H5Tinsert(mem_type, "string_value", HOFFSET(key, name), native_string_datatype_id);
+	H5Tinsert(mem_type, "offset", HOFFSET(key, location), H5T_NATIVE_HSIZE);
 
 	H5Dread (dataset_id, mem_type, H5S_ALL, H5S_ALL, H5P_DEFAULT, keys_buffer);
 
