@@ -70,8 +70,8 @@ private:
 	void write_names(hid_t group_id, char* const* buffer, unsigned int n_variants) throw (HVCFWriteException);
 	void write_positions(hid_t group_id, const unsigned long long int* buffer, unsigned int n_variants) throw (HVCFWriteException);
 
-	void create_positions_index_bucket(hid_t group_id, const string& hash, const vector<hsize_t>& offsets) throw (HVCFWriteException);
-	void create_names_index_bucket(hid_t group_id, const string& hash, const vector<hsize_t>& offsets) throw (HVCFWriteException);
+	void write_positions_index_bucket(hid_t chromosome_group_id, const string& hash, const vector<hsize_t>& offsets) throw (HVCFWriteException);
+	void write_names_index_bucket(hid_t chromosome_group_id, const string& hash, const vector<hsize_t>& offsets) throw (HVCFWriteException);
 	void create_positions_index(const string& chromosome) throw (HVCFWriteException);
 	void create_names_index(const string& chromosome) throw (HVCFWriteException);
 
@@ -98,8 +98,10 @@ public:
 	hsize_t get_n_variants() throw (HVCFReadException);
 	hsize_t get_n_variants(const string& chromosome) throw (HVCFReadException);
 
-	int get_variant_index_by_position(const string& chromosome, unsigned long long int position) throw (HVCFReadException);
-	int get_variant_index_by_name(const string& chromosome, const string& name) throw (HVCFReadException);
+	long long int get_variant_offset_by_position(const string& chromosome, unsigned long long int position) throw (HVCFReadException);
+	long long int get_variant_offset_by_name(const string& chromosome, const string& name) throw (HVCFReadException);
+
+	void compute_ld(const string& chromosome, const string& lead_variant_name, unsigned long long int start_position, unsigned long long end_position) throw (HVCFReadException);
 
 	unsigned int get_n_opened_objects() const;
 	static unsigned int get_n_all_opened_objects();

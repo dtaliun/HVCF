@@ -324,14 +324,7 @@ void HVCF::write_positions(hid_t group_id, const unsigned long long int* buffer,
 	}
 }
 
-void HVCF::create_positions_index_bucket(hid_t chromosome_group_id, const string& hash, const vector<hsize_t>& offsets) throw (HVCFWriteException) {
-	HDF5DataspaceIdentifier file_dataspace_id;
-	HDF5DataspaceIdentifier memory_dataspace_id;
-	HDF5PropertyIdentifier dataset_property_id;
-	HDF5DatasetIdentifier dataset_id;
-	HDF5GroupIdentifier index_group_id;
-	HDF5DatatypeIdentifier index_key_type_id;
-
+void HVCF::write_positions_index_bucket(hid_t chromosome_group_id, const string& hash, const vector<hsize_t>& offsets) throw (HVCFWriteException) {
 	if (hash.length() == 0u) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Empty group name.");
 	}
@@ -340,9 +333,18 @@ void HVCF::create_positions_index_bucket(hid_t chromosome_group_id, const string
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Empty list of offsets");
 	}
 
+	HDF5DatasetIdentifier dataset_id;
+	HDF5DataspaceIdentifier file_dataspace_id;
+	HDF5DataspaceIdentifier memory_dataspace_id;
+	HDF5PropertyIdentifier dataset_property_id;
+	HDF5GroupIdentifier index_group_id;
+	HDF5DatatypeIdentifier index_key_type_id;
+	HDF5DatatypeIdentifier memory_index_key_type;
+
 	hsize_t dims[1]{offsets.size()};
 	hsize_t mem_dims[1]{offsets.size()};
 	unsigned long long int buffer[offsets.size()];
+	ull_index_key_type keys_buffer[offsets.size()];
 
 	if ((dataset_id = H5Dopen(chromosome_group_id, VARIANT_POSITIONS_DATASET, H5P_DEFAULT)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while opening dataset.");
@@ -365,10 +367,8 @@ void HVCF::create_positions_index_bucket(hid_t chromosome_group_id, const string
 	}
 
 	file_dataspace_id.close();
-//	memory_dataspace_id.close();
+	memory_dataspace_id.close();
 	dataset_id.close();
-
-	ull_index_key_type keys_buffer[offsets.size()];
 
 	for (unsigned int i = 0; i < offsets.size(); ++i) {
 		keys_buffer[i].ull_value = buffer[i];
@@ -380,13 +380,23 @@ void HVCF::create_positions_index_bucket(hid_t chromosome_group_id, const string
 				return (f.ull_value < s.ull_value);
 	});
 
-	index_key_type_id = H5Topen(file_id, ULL_INDEX_KEY_TYPE, H5P_DEFAULT);
+	if ((index_key_type_id = H5Topen(file_id, ULL_INDEX_KEY_TYPE, H5P_DEFAULT)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while opening datatype.");
+	}
 
-	HDF5DatatypeIdentifier mem_type;
+	// BEGIN: create memory datatype.
+	if ((memory_index_key_type = H5Tcreate(H5T_COMPOUND, sizeof(ull_index_key_type))) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating compound datatype.");
+	}
 
-	mem_type = H5Tcreate(H5T_COMPOUND, sizeof(ull_index_key_type));
-	H5Tinsert(mem_type, "ull_value", HOFFSET(ull_index_key_type, ull_value), H5T_NATIVE_ULLONG);
-	H5Tinsert(mem_type, "offset", HOFFSET(ull_index_key_type, offset), H5T_NATIVE_HSIZE);
+	if (H5Tinsert(memory_index_key_type, "ull_value", HOFFSET(ull_index_key_type, ull_value), H5T_NATIVE_ULLONG) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while adding new member to compound datatype.");
+	}
+
+	if (H5Tinsert(memory_index_key_type, "offset", HOFFSET(ull_index_key_type, offset), H5T_NATIVE_HSIZE) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while adding new member to compound datatype.");
+	}
+	// END: create memory datatype.
 
 	if ((index_group_id = H5Gopen(chromosome_group_id, VARIANT_POSITIONS_INDEX, H5P_DEFAULT)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while opening group.");
@@ -404,19 +414,12 @@ void HVCF::create_positions_index_bucket(hid_t chromosome_group_id, const string
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataset.");
 	}
 
-	if (H5Dwrite(dataset_id, mem_type, H5S_ALL, H5S_ALL, H5P_DEFAULT, keys_buffer) < 0) {
+	if (H5Dwrite(dataset_id, memory_index_key_type, H5S_ALL, H5S_ALL, H5P_DEFAULT, keys_buffer) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while writing to dataset.");
 	}
 }
 
-void HVCF::create_names_index_bucket(hid_t chromosome_group_id, const string& hash, const vector<hsize_t>& offsets) throw (HVCFWriteException) {
-	HDF5DataspaceIdentifier file_dataspace_id;
-	HDF5DataspaceIdentifier memory_dataspace_id;
-	HDF5PropertyIdentifier dataset_property_id;
-	HDF5DatasetIdentifier dataset_id;
-	HDF5GroupIdentifier index_group_id;
-	HDF5DatatypeIdentifier index_key_type_id;
-
+void HVCF::write_names_index_bucket(hid_t chromosome_group_id, const string& hash, const vector<hsize_t>& offsets) throw (HVCFWriteException) {
 	if (hash.length() == 0u) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Empty group name.");
 	}
@@ -425,9 +428,18 @@ void HVCF::create_names_index_bucket(hid_t chromosome_group_id, const string& ha
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Empty list of offsets");
 	}
 
+	HDF5DatasetIdentifier dataset_id;
+	HDF5DataspaceIdentifier file_dataspace_id;
+	HDF5DataspaceIdentifier memory_dataspace_id;
+	HDF5PropertyIdentifier dataset_property_id;
+	HDF5GroupIdentifier index_group_id;
+	HDF5DatatypeIdentifier index_key_type_id;
+	HDF5DatatypeIdentifier memory_index_key_type;
+
 	hsize_t dims[1]{offsets.size()};
 	hsize_t mem_dims[1]{offsets.size()};
 	char* buffer[offsets.size()];
+	string_index_key_type keys_buffer[offsets.size()];
 
 	if ((dataset_id = H5Dopen(chromosome_group_id, VARIANT_NAMES_DATASET, H5P_DEFAULT)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while opening dataset.");
@@ -449,15 +461,12 @@ void HVCF::create_names_index_bucket(hid_t chromosome_group_id, const string& ha
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while reading from dataset");
 	}
 
-	string_index_key_type keys_buffer[offsets.size()];
-
 	for (unsigned int i = 0; i < offsets.size(); ++i) {
 		keys_buffer[i].string_value = buffer[i];
 		keys_buffer[i].offset = offsets[i];
 	}
 
 	file_dataspace_id.close();
-	////	memory_dataspace_id.close();
 	dataset_id.close();
 
 	sort(keys_buffer, keys_buffer + offsets.size(),
@@ -465,17 +474,28 @@ void HVCF::create_names_index_bucket(hid_t chromosome_group_id, const string& ha
 				return (strcmp(f.string_value, s.string_value) < 0);
 	});
 
-	index_key_type_id = H5Topen(file_id, STRING_INDEX_KEY_TYPE, H5P_DEFAULT);
+	if ((index_key_type_id = H5Topen(file_id, STRING_INDEX_KEY_TYPE, H5P_DEFAULT)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while opening datatype.");
+	}
 
-	HDF5DatatypeIdentifier mem_type;
+	// BEGIN: create memory datatype.
+	if ((memory_index_key_type = H5Tcreate(H5T_COMPOUND, sizeof(string_index_key_type))) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating compound datatype.");
+	}
 
-	mem_type = H5Tcreate(H5T_COMPOUND, sizeof(string_index_key_type));
-	H5Tinsert(mem_type, "string_value", HOFFSET(string_index_key_type, string_value), native_string_datatype_id);
-	H5Tinsert(mem_type, "offset", HOFFSET(string_index_key_type, offset), H5T_NATIVE_HSIZE);
+	if (H5Tinsert(memory_index_key_type, "string_value", HOFFSET(string_index_key_type, string_value), native_string_datatype_id) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while adding new member to compound datatype.");
+	}
+
+	if (H5Tinsert(memory_index_key_type, "offset", HOFFSET(string_index_key_type, offset), H5T_NATIVE_HSIZE) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while adding new member to compound datatype.");
+	}
+	// END: create memory datatype.
 
 	if ((index_group_id = H5Gopen(chromosome_group_id, VARIANT_NAMES_INDEX, H5P_DEFAULT)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while opening group.");
 	}
+
 	if ((file_dataspace_id = H5Screate_simple(1, dims, NULL)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataspace.");
 	}
@@ -488,12 +508,177 @@ void HVCF::create_names_index_bucket(hid_t chromosome_group_id, const string& ha
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataset.");
 	}
 
-	if (H5Dwrite(dataset_id, mem_type, H5S_ALL, H5S_ALL, H5P_DEFAULT, keys_buffer) < 0) {
+	if (H5Dwrite(dataset_id, memory_index_key_type, H5S_ALL, H5S_ALL, H5P_DEFAULT, keys_buffer) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while writing to dataset.");
 	}
 
 	if (H5Dvlen_reclaim(native_string_datatype_id, memory_dataspace_id, H5P_DEFAULT, buffer) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while reclaiming HDF5 memory.");
+	}
+}
+
+void HVCF::create_positions_index(const string& chromosome) throw (HVCFWriteException) {
+	auto chromosomes_it = chromosomes.find(chromosome);
+
+	if (chromosomes_it == chromosomes.end()) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Specified chromosome name was not found.");
+	}
+
+	HDF5DatasetIdentifier dataset_id;
+	HDF5DataspaceIdentifier file_dataspace_id;
+	HDF5DataspaceIdentifier memory_dataspace_id;
+	HDF5GroupIdentifier index_group_id;
+
+	const unsigned int read_chunk_size = 10000;
+
+	hsize_t file_dims[1]{0};
+	hsize_t file_offset[1]{0};
+	hsize_t mem_dims[1]{read_chunk_size};
+	unsigned long long int buffer[read_chunk_size];
+
+	unordered_map<unsigned int, vector<hsize_t>> buckets;
+	auto buckets_it = buckets.end();
+
+	size_t hash_value = 0;
+
+	if ((dataset_id = H5Dopen(chromosomes_it->second->get(), VARIANT_POSITIONS_DATASET, H5P_DEFAULT)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while opening dataset.");
+	}
+
+	if ((file_dataspace_id = H5Dget_space(dataset_id)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while getting dataspace.");
+	}
+
+	if (H5Sget_simple_extent_dims(file_dataspace_id, file_dims, nullptr) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while getting dataspace dimensions.");
+	}
+
+	if ((index_group_id = H5Gcreate(chromosomes_it->second->get(), VARIANT_POSITIONS_INDEX, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating group.");
+	}
+
+	while (file_offset[0] < file_dims[0]) {
+		if (file_offset[0] + read_chunk_size > file_dims[0]) {
+			mem_dims[0] = file_dims[0] - file_offset[0];
+		} else {
+			mem_dims[0] = read_chunk_size;
+		}
+
+		if ((memory_dataspace_id = H5Screate_simple(1, mem_dims, nullptr)) < 0) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating memory dataspace.");
+		}
+
+		if (H5Sselect_hyperslab(file_dataspace_id, H5S_SELECT_SET, file_offset, NULL, mem_dims, NULL) < 0) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while making selection in dataspace.");
+		}
+
+		if (H5Dread(dataset_id, H5T_NATIVE_ULLONG, memory_dataspace_id, file_dataspace_id, H5P_DEFAULT, buffer) < 0) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while reading from dataset");
+		}
+
+		for (unsigned int i = 0; i < mem_dims[0]; ++i) {
+			hash_value = buffer[i] % N_HASH_BUCKETS;
+			buckets_it = buckets.find(hash_value);
+			if (buckets_it == buckets.end()) {
+				buckets_it = buckets.emplace(hash_value, vector<hsize_t>()).first;
+			}
+			buckets_it->second.push_back(file_offset[0]);
+			file_offset[0] += 1;
+		}
+
+		memory_dataspace_id.close();
+	}
+
+	for (auto&& bucket : buckets) {
+		if (bucket.second.size() == 0) {
+			continue;
+		}
+		write_positions_index_bucket(chromosomes_it->second->get(), to_string(bucket.first), bucket.second);
+	}
+}
+
+void HVCF::create_names_index(const string& chromosome) throw (HVCFWriteException) {
+	auto chromosomes_it = chromosomes.find(chromosome);
+
+	if (chromosomes_it == chromosomes.end()) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Specified chromosome name was not found.");
+	}
+
+	HDF5DatasetIdentifier dataset_id;
+	HDF5DataspaceIdentifier file_dataspace_id;
+	HDF5DataspaceIdentifier memory_dataspace_id;
+	HDF5GroupIdentifier index_group_id;
+
+	const unsigned int read_chunk_size = 10000;
+
+	hsize_t file_dims[1]{0};
+	hsize_t file_offset[1]{0};
+	hsize_t mem_dims[1]{read_chunk_size};
+	char* buffer[read_chunk_size];
+
+	unordered_map<unsigned int, vector<hsize_t>> buckets;
+	auto buckets_it = buckets.end();
+
+	std::hash<string> hash_function;
+	size_t hash_value;
+
+	if ((dataset_id = H5Dopen(chromosomes_it->second->get(), VARIANT_NAMES_DATASET, H5P_DEFAULT)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while opening dataset.");
+	}
+
+	if ((file_dataspace_id = H5Dget_space(dataset_id)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while getting dataspace.");
+	}
+
+	if (H5Sget_simple_extent_dims(file_dataspace_id, file_dims, nullptr) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while getting dataspace dimensions.");
+	}
+
+	if ((index_group_id = H5Gcreate(chromosomes_it->second->get(), VARIANT_NAMES_INDEX, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating group.");
+	}
+
+	while (file_offset[0] < file_dims[0]) {
+		if (file_offset[0] + read_chunk_size > file_dims[0]) {
+			mem_dims[0] = file_dims[0] - file_offset[0];
+		} else {
+			mem_dims[0] = read_chunk_size;
+		}
+
+		if ((memory_dataspace_id = H5Screate_simple(1, mem_dims, nullptr)) < 0) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating memory dataspace.");
+		}
+
+		if (H5Sselect_hyperslab(file_dataspace_id, H5S_SELECT_SET, file_offset, NULL, mem_dims, NULL) < 0) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while making selection in dataspace.");
+		}
+
+		if (H5Dread(dataset_id, native_string_datatype_id, memory_dataspace_id, file_dataspace_id, H5P_DEFAULT, buffer) < 0) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while reading from dataset");
+		}
+
+		for (unsigned int i = 0; i < mem_dims[0]; ++i) {
+			hash_value = hash_function(buffer[i]) % N_HASH_BUCKETS;
+			buckets_it = buckets.find(hash_value);
+			if (buckets_it == buckets.end()) {
+				buckets_it = buckets.emplace(hash_value, vector<hsize_t>()).first;
+			}
+			buckets_it->second.push_back(file_offset[0]);
+			file_offset[0] += 1;
+		}
+
+		if (H5Dvlen_reclaim(native_string_datatype_id, memory_dataspace_id, H5P_DEFAULT, buffer) < 0) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while reclaiming HDF5 memory.");
+		}
+
+		memory_dataspace_id.close();
+	}
+
+	for (auto&& bucket : buckets) {
+		if (bucket.second.size() == 0) {
+			continue;
+		}
+		write_names_index_bucket(chromosomes_it->second->get(), to_string(bucket.first), bucket.second);
 	}
 }
 
@@ -674,7 +859,7 @@ void HVCF::write_variant(const Variant& variant) throw (HVCFWriteException) {
 
 	if (chromosomes.count(chromosome) == 0) {
 		chromosomes_it = chromosomes.emplace(chromosome, std::move(unique_ptr<HDF5GroupIdentifier>(new HDF5GroupIdentifier()))).first;
-		buffers_it = write_buffers.emplace(chromosome, std::move(unique_ptr<WriteBuffer>(new WriteBuffer(1000, get_n_samples())))).first;
+		buffers_it = write_buffers.emplace(chromosome, std::move(unique_ptr<WriteBuffer>(new WriteBuffer(100000, get_n_samples())))).first;
 		chromosomes_it->second->set(create_chromosome_group(chromosome));
 	} else {
 		chromosomes_it = chromosomes.find(chromosome);
@@ -932,49 +1117,70 @@ hsize_t HVCF::get_n_variants(const string& chromosome) throw (HVCFReadException)
 	return file_dims[0];
 }
 
-int HVCF::get_variant_index_by_position(const string& chromosome, unsigned long long int position) throw (HVCFReadException) {
+long long int HVCF::get_variant_offset_by_position(const string& chromosome, unsigned long long int position) throw (HVCFReadException) {
 	auto chromosomes_it = chromosomes.find(chromosome);
-	HDF5GroupIdentifier index_group_id;
-	HDF5DatasetIdentifier dataset_id;
-	HDF5DataspaceIdentifier dataspace_id;
 
 	if (chromosomes_it == chromosomes.end()) {
 		return -1;
 	}
 
+	HDF5GroupIdentifier index_group_id;
+	HDF5DatasetIdentifier dataset_id;
+	HDF5DataspaceIdentifier dataspace_id;
+
 	if ((index_group_id = H5Gopen(chromosomes_it->second->get(), VARIANT_POSITIONS_INDEX, H5P_DEFAULT)) < 0) {
-		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while opening group.");
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while opening group.");
 	}
 
-	int hash = position % N_HASH_BUCKETS;
+	string hash_value = std::to_string(position % N_HASH_BUCKETS);
 
 	hsize_t file_dims[1]{0};
 
-	htri_t exists = H5Lexists(index_group_id, std::to_string(hash).c_str(), H5P_DEFAULT);
+	htri_t exists = H5Lexists(index_group_id, hash_value.c_str(), H5P_DEFAULT);
+	if (exists < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while hash bucket.");
+	}
+
 	if (exists != true) {
 		return -1;
 	}
 
-	dataset_id = H5Dopen(index_group_id, std::to_string(hash).c_str(), H5P_DEFAULT);
-	dataspace_id = H5Dget_space(dataset_id);
-	H5Sget_simple_extent_dims(dataspace_id, file_dims, NULL);
+	if ((dataset_id = H5Dopen(index_group_id, hash_value.c_str(), H5P_DEFAULT)) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while opening dataset.");
+	}
+
+	if ((dataspace_id = H5Dget_space(dataset_id)) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while getting dataspace.");
+	}
+
+	if (H5Sget_simple_extent_dims(dataspace_id, file_dims, NULL) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while getting dataspace dimensions.");
+	}
 
 	ull_index_key_type keys_buffer[file_dims[0]];
 
 	ull_index_key_type search_key;
 	search_key.ull_value = position;
 
-	HDF5DatatypeIdentifier mem_type;
+	HDF5DatatypeIdentifier memory_index_key_type;
 
-	mem_type = H5Tcreate(H5T_COMPOUND, sizeof(ull_index_key_type));
-	H5Tinsert(mem_type, "ull_value", HOFFSET(ull_index_key_type, ull_value), H5T_NATIVE_ULLONG);
-	H5Tinsert(mem_type, "offset", HOFFSET(ull_index_key_type, offset), H5T_NATIVE_HSIZE);
+	// BEGIN: create memory datatype.
+	if ((memory_index_key_type = H5Tcreate(H5T_COMPOUND, sizeof(ull_index_key_type))) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while creating compound datatype.");
+	}
 
-	H5Dread (dataset_id, mem_type, H5S_ALL, H5S_ALL, H5P_DEFAULT, keys_buffer);
-//
-//	for (unsigned int i = 0; i < file_dims[0]; ++i) {
-//		cout << keys_buffer[i].position << " " << keys_buffer[i].location << endl;
-//	}
+	if (H5Tinsert(memory_index_key_type, "ull_value", HOFFSET(ull_index_key_type, ull_value), H5T_NATIVE_ULLONG) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while adding new member to compound datatype.");
+	}
+
+	if (H5Tinsert(memory_index_key_type, "offset", HOFFSET(ull_index_key_type, offset), H5T_NATIVE_HSIZE) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while adding new member to compound datatype.");
+	}
+	// END: create memory datatype.
+
+	if (H5Dread(dataset_id, memory_index_key_type, H5S_ALL, H5S_ALL, H5P_DEFAULT, keys_buffer) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while reading from dataset.");
+	}
 
 	auto result = lower_bound(keys_buffer, keys_buffer + file_dims[0], search_key,
 			[] (const ull_index_key_type& f, const ull_index_key_type& s) -> bool {
@@ -982,84 +1188,150 @@ int HVCF::get_variant_index_by_position(const string& chromosome, unsigned long 
 			});
 
 	if ((result == keys_buffer + file_dims[0]) || (result->ull_value != position)) {
-//		cout << "Not found" << endl;
 		return -1;
 	}
-
-//	cout << position << " Found at : " << result->location << endl;
 
 	return result->offset;
 }
 
-int HVCF::get_variant_index_by_name(const string& chromosome, const string& name) throw (HVCFReadException) {
+long long int HVCF::get_variant_offset_by_name(const string& chromosome, const string& name) throw (HVCFReadException) {
 	auto chromosomes_it = chromosomes.find(chromosome);
+
+	if (chromosomes_it == chromosomes.end()) {
+		return -1;
+	}
 
 	HDF5GroupIdentifier index_group_id;
 	HDF5DatasetIdentifier dataset_id;
 	HDF5DataspaceIdentifier dataspace_id;
 
 	std::hash<string> hash_function;
-	size_t hash_value;
 
 	if (chromosomes_it == chromosomes.end()) {
 		return -1;
 	}
 
 	if ((index_group_id = H5Gopen(chromosomes_it->second->get(), VARIANT_NAMES_INDEX, H5P_DEFAULT)) < 0) {
-		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while opening group.");
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while opening group.");
 	}
 
-	hash_value = hash_function(name) % N_HASH_BUCKETS;
+	string hash_value = std::to_string(hash_function(name) % N_HASH_BUCKETS);
 
-	htri_t exists = H5Lexists(index_group_id, std::to_string(hash_value).c_str(), H5P_DEFAULT);
+	htri_t exists = H5Lexists(index_group_id, hash_value.c_str(), H5P_DEFAULT);
+	if (exists < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while hash bucket.");
+	}
+
 	if (exists != true) {
 		return -1;
 	}
 
 	hsize_t file_dims[1]{0};
 
-	dataset_id = H5Dopen(index_group_id, std::to_string(hash_value).c_str(), H5P_DEFAULT);
-	dataspace_id = H5Dget_space(dataset_id);
-	H5Sget_simple_extent_dims(dataspace_id, file_dims, NULL);
+	if ((dataset_id = H5Dopen(index_group_id, hash_value.c_str(), H5P_DEFAULT)) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while opening dataset.");
+	}
+
+	if ((dataspace_id = H5Dget_space(dataset_id)) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while getting dataspace.");
+	}
+
+	if (H5Sget_simple_extent_dims(dataspace_id, file_dims, NULL) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while getting dataspace dimensions.");
+	}
 
 	string_index_key_type keys_buffer[file_dims[0]];
-
 
 	string_index_key_type search_key;
 	search_key.string_value = (char*)name.c_str();
 
-	HDF5DatatypeIdentifier mem_type;
+	HDF5DatatypeIdentifier memory_index_key_type;
 
-	mem_type = H5Tcreate(H5T_COMPOUND, sizeof(string_index_key_type));
-	H5Tinsert(mem_type, "string_value", HOFFSET(string_index_key_type, string_value), native_string_datatype_id);
-	H5Tinsert(mem_type, "offset", HOFFSET(string_index_key_type, offset), H5T_NATIVE_HSIZE);
+	// BEGIN: create memory datatype.
+	if ((memory_index_key_type = H5Tcreate(H5T_COMPOUND, sizeof(string_index_key_type))) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while creating compound datatype.");
+	}
 
-	H5Dread (dataset_id, mem_type, H5S_ALL, H5S_ALL, H5P_DEFAULT, keys_buffer);
+	if (H5Tinsert(memory_index_key_type, "string_value", HOFFSET(string_index_key_type, string_value), native_string_datatype_id) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while adding new member to compound datatype.");
+	}
 
-//	for (unsigned int i = 0; i < file_dims[0]; ++i) {
-//		cout << keys_buffer[i].name << " " << keys_buffer[i].location << endl;
-//	}
+	if (H5Tinsert(memory_index_key_type, "offset", HOFFSET(string_index_key_type, offset), H5T_NATIVE_HSIZE) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while adding new member to compound datatype.");
+	}
+	// END: create memory datatype.
+
+	if (H5Dread(dataset_id, memory_index_key_type, H5S_ALL, H5S_ALL, H5P_DEFAULT, keys_buffer) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while reading from dataset.");
+	}
 
 	auto result = lower_bound(keys_buffer, keys_buffer + file_dims[0], search_key,
 			[] (const string_index_key_type& f, const string_index_key_type& s) -> bool {
 				return (strcmp(f.string_value, s.string_value) < 0);
 			});
 
-	int index = 0;
+	long long int offset = 0;
 
 	if ((result == keys_buffer + file_dims[0]) || (strcmp(result->string_value, name.c_str())) != 0) {
-//		cout << name << " not found" << endl;
-		index = -1;
+		offset = -1;
 	} else {
-		index = result->offset;
-//		cout << name << " found at " << index << endl;
+		offset = result->offset;
 	}
 
-	if (H5Dvlen_reclaim(mem_type, dataspace_id, H5P_DEFAULT, keys_buffer) < 0) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while reclaiming HDF5 memory.");
+	if (H5Dvlen_reclaim(memory_index_key_type, dataspace_id, H5P_DEFAULT, keys_buffer) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while reclaiming HDF5 memory.");
 	}
 
-	return index;
+	return offset;
+}
+
+void HVCF::compute_ld(const string& chromosome, const string& lead_variant_name, unsigned long long int start_position, unsigned long long end_position) throw (HVCFReadException) {
+	auto chromosome_it = chromosomes.find(chromosome); //TODO: check if chromosome exists
+
+	long long int lead_variant_offset = get_variant_offset_by_name(chromosome, lead_variant_name); // TODO: check if exists
+	long long int start_position_offset = get_variant_offset_by_position(chromosome, start_position); // TODO: put 0 if not exists
+	long long int end_position_offset = get_variant_offset_by_position(chromosome, end_position); // TODO: put file_dims[0] - 1 offset if not exists
+
+	HDF5DatasetIdentifier dataset_id;
+	HDF5DataspaceIdentifier file_dataspace_id;
+	HDF5DataspaceIdentifier memory_dataspace_id;
+
+	hsize_t n_samples = get_n_samples(); // TODO: compute this only once on file opening
+	hsize_t n_haplotypes = n_samples + n_samples; // TODO: compute this only once on file opening
+	long long int n_variants = end_position_offset - start_position_offset + 1;
+
+	hsize_t file_offset[2]{start_position_offset, n_haplotypes};
+	hsize_t mem_dims[2]{n_variants, n_haplotypes};
+
+	unique_ptr<unsigned char[]> haplotypes = unique_ptr<unsigned char[]>(new unsigned char[n_variants * n_haplotypes]);
+
+	if ((dataset_id = H5Dopen(chromosome_it->second->get(), HAPLOTYPES_DATASET, H5P_DEFAULT)) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while opening dataset.");
+	}
+
+	if ((file_dataspace_id = H5Dget_space(dataset_id)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while getting dataspace.");
+	}
+
+	if ((memory_dataspace_id = H5Screate_simple(1, mem_dims, nullptr)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating memory dataspace.");
+	}
+
+	if (H5Sselect_hyperslab(file_dataspace_id, H5S_SELECT_SET, file_offset, NULL, mem_dims, NULL) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while making selection in dataspace.");
+	}
+
+	if (H5Dread(dataset_id, H5T_NATIVE_ULLONG, memory_dataspace_id, file_dataspace_id, H5P_DEFAULT, haplotypes.get()) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while reading from dataset");
+	}
+
+	for (long long int i = 0; i < n_variants; ++i) {
+		for (hsize_t j = 0; j < n_haplotypes; ++j) {
+			cout << haplotypes[i * n_haplotypes + j];
+		}
+		cout << endl;
+	}
+
 }
 
 unsigned int HVCF::get_n_opened_objects() const {
@@ -1071,170 +1343,6 @@ unsigned int HVCF::get_n_opened_objects() const {
 
 unsigned int HVCF::get_n_all_opened_objects() {
 	return H5Fget_obj_count(H5F_OBJ_ALL, H5F_OBJ_ALL);
-}
-
-void HVCF::create_positions_index(const string& chromosome) throw (HVCFWriteException) {
-	auto chromosomes_it = chromosomes.find(chromosome);
-
-	HDF5DatasetIdentifier dataset_id;
-	HDF5DataspaceIdentifier file_dataspace_id;
-	HDF5DataspaceIdentifier memory_dataspace_id;
-
-	const unsigned int read_chunk_size = 5000;
-
-	hsize_t file_dims[1]{0};
-	hsize_t file_offset[1]{0};
-	hsize_t mem_dims[1]{read_chunk_size};
-	unsigned long long int buffer[read_chunk_size];
-
-	unordered_map<unsigned int, vector<hsize_t>> buckets;
-	auto buckets_it = buckets.end();
-
-	unsigned int hash = 0u;
-
-	if ((dataset_id = H5Dopen(chromosomes_it->second->get(), VARIANT_POSITIONS_DATASET, H5P_DEFAULT)) < 0) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while opening dataset.");
-	}
-
-	if ((file_dataspace_id = H5Dget_space(dataset_id)) < 0) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while getting dataspace.");
-	}
-
-	if (H5Sget_simple_extent_dims(file_dataspace_id, file_dims, nullptr) < 0) {
-		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while getting dataspace dimensions.");
-	}
-
-	while (file_offset[0] < file_dims[0]) {
-		if (file_offset[0] + read_chunk_size > file_dims[0]) {
-			mem_dims[0] = file_dims[0] - file_offset[0];
-		} else {
-			mem_dims[0] = read_chunk_size;
-		}
-
-		if ((memory_dataspace_id = H5Screate_simple(1, mem_dims, nullptr)) < 0) {
-			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating memory dataspace.");
-		}
-
-		if (H5Sselect_hyperslab(file_dataspace_id, H5S_SELECT_SET, file_offset, NULL, mem_dims, NULL) < 0) {
-			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while making selection in dataspace.");
-		}
-
-		if (H5Dread(dataset_id, H5T_NATIVE_ULLONG, memory_dataspace_id, file_dataspace_id, H5P_DEFAULT, buffer) < 0) {
-			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while reading from dataset");
-		}
-
-		for (unsigned int i = 0; i < mem_dims[0]; ++i) {
-			hash = buffer[i] % N_HASH_BUCKETS;
-			buckets_it = buckets.find(hash);
-			if (buckets_it == buckets.end()) {
-				buckets_it = buckets.emplace(hash, vector<hsize_t>()).first;
-			}
-			buckets_it->second.push_back(file_offset[0]);
-			file_offset[0] += 1;
-		}
-
-		memory_dataspace_id.close();
-	}
-
-	HDF5GroupIdentifier index_group_id;
-
-	if ((index_group_id = H5Gcreate(chromosomes_it->second->get(), VARIANT_POSITIONS_INDEX, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating group.");
-	}
-
-	for (auto&& bucket : buckets) {
-		if (bucket.second.size() == 0) {
-			continue;
-		}
-//		cout << "CREATED BUCKET " << bucket.first << ": " << bucket.second.size() << endl;
-		create_positions_index_bucket(chromosomes_it->second->get(), to_string(bucket.first), bucket.second);
-	}
-
-}
-
-void HVCF::create_names_index(const string& chromosome) throw (HVCFWriteException) {
-	auto chromosomes_it = chromosomes.find(chromosome);
-
-	HDF5DatasetIdentifier dataset_id;
-	HDF5DataspaceIdentifier file_dataspace_id;
-	HDF5DataspaceIdentifier memory_dataspace_id;
-
-	const unsigned int read_chunk_size = 5000;
-
-	hsize_t file_dims[1]{0};
-	hsize_t file_offset[1]{0};
-	hsize_t mem_dims[1]{read_chunk_size};
-	char* buffer[read_chunk_size];
-
-	unordered_map<unsigned int, vector<hsize_t>> buckets;
-	auto buckets_it = buckets.end();
-
-	std::hash<string> hash_function;
-	size_t hash_value;
-
-	if ((dataset_id = H5Dopen(chromosomes_it->second->get(), VARIANT_NAMES_DATASET, H5P_DEFAULT)) < 0) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while opening dataset.");
-	}
-
-	if ((file_dataspace_id = H5Dget_space(dataset_id)) < 0) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while getting dataspace.");
-	}
-
-	if (H5Sget_simple_extent_dims(file_dataspace_id, file_dims, nullptr) < 0) {
-		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while getting dataspace dimensions.");
-	}
-
-	while (file_offset[0] < file_dims[0]) {
-		if (file_offset[0] + read_chunk_size > file_dims[0]) {
-			mem_dims[0] = file_dims[0] - file_offset[0];
-		} else {
-			mem_dims[0] = read_chunk_size;
-		}
-
-		if ((memory_dataspace_id = H5Screate_simple(1, mem_dims, nullptr)) < 0) {
-			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating memory dataspace.");
-		}
-
-		if (H5Sselect_hyperslab(file_dataspace_id, H5S_SELECT_SET, file_offset, NULL, mem_dims, NULL) < 0) {
-			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while making selection in dataspace.");
-		}
-
-		if (H5Dread(dataset_id, native_string_datatype_id, memory_dataspace_id, file_dataspace_id, H5P_DEFAULT, buffer) < 0) {
-			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while reading from dataset");
-		}
-
-		for (unsigned int i = 0; i < mem_dims[0]; ++i) {
-			hash_value = hash_function(buffer[i]) % N_HASH_BUCKETS;
-			buckets_it = buckets.find(hash_value);
-			if (buckets_it == buckets.end()) {
-				buckets_it = buckets.emplace(hash_value, vector<hsize_t>()).first;
-			}
-			buckets_it->second.push_back(file_offset[0]);
-			file_offset[0] += 1;
-		}
-
-		if (H5Dvlen_reclaim(native_string_datatype_id, memory_dataspace_id, H5P_DEFAULT, buffer) < 0) {
-			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while reclaiming HDF5 memory.");
-		}
-
-		memory_dataspace_id.close();
-	}
-
-	HDF5GroupIdentifier index_group_id;
-
-	if ((index_group_id = H5Gcreate(chromosomes_it->second->get(), VARIANT_NAMES_INDEX, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating group.");
-	}
-
-//	cout << "NUMBER OF BUCKETS = " << buckets.size() << endl;
-	for (auto&& bucket : buckets) {
-		if (bucket.second.size() == 0) {
-			continue;
-		}
-//		cout << bucket.first << ": " << bucket.second.size() << endl;
-		create_names_index_bucket(chromosomes_it->second->get(), to_string(bucket.first), bucket.second);
-	}
-
 }
 
 void HVCF::create_indices() throw (HVCFWriteException) {
