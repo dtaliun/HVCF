@@ -1,5 +1,5 @@
-HDF5LIB=/Users/dtaliun/Documents/hdf5-1.10.0-alpha1/hdf5/lib
-HDF5INCS=/Users/dtaliun/Documents/hdf5-1.10.0-alpha1/hdf5/include
+HDF5LIB=/Users/dtaliun/Documents/hdf5-1.10.0-pre2/hdf5/lib
+HDF5INCS=/Users/dtaliun/Documents/hdf5-1.10.0-pre2/hdf5/include
 
 CXX = g++
 CXXFLAGS = -std=c++11 -Wall -O3 -L$(HDF5LIB)

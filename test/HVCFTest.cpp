@@ -16,7 +16,7 @@ protected:
 	}
 };
 
-TEST_F(HVCFTest, Create) {
+TEST_F(HVCFTest, DISABLED_Create) {
 	vector<string> in_samples{"sample1", "sample2", "sample3", "sample4", "sample5"};
 	vector<string> in_pop1_samples{"sample5", "sample2", "sample3"};
 	vector<string> in_pop1_samples_ordered{"sample2", "sample3", "sample5"};
@@ -79,7 +79,7 @@ TEST_F(HVCFTest, Create) {
 
 }
 
-TEST_F(HVCFTest, WriteVCF) {
+TEST_F(HVCFTest, DISABLED_WriteVCF) {
 	{ // 'dummy' scope to check if HVCF object closes every opened HDF5 identifier on its destruction
 		sph_umich_edu::HVCF hvcf;
 		sph_umich_edu::VCFReader vcf;
@@ -246,7 +246,7 @@ TEST_F(HVCFTest, VariantLookupByName) {
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTest, LargeFileTest) {
+TEST_F(HVCFTest, DISABLED_LargeFileTest) {
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	std::chrono::duration<double> elapsed_seconds;
 	sph_umich_edu::HVCF hvcf;
@@ -365,4 +365,57 @@ TEST_F(HVCFTest, LargeFileTest) {
 	hvcf.close();
 	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+}
+
+TEST_F(HVCFTest, ChunkReadTest) {
+	std::chrono::time_point<std::chrono::system_clock> start, end;
+	std::chrono::duration<double> elapsed_seconds;
+	sph_umich_edu::HVCF hvcf;
+
+	hvcf.open("test_large.h5");
+	ASSERT_EQ(5u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(6u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	hvcf.chunk_read_test("20", "20:60795_G/C", 61955ul, 167900ul);
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "1000 variants = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(5u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	hvcf.chunk_read_test("20", "20:60795_G/C", 3322215ul, 4397713ul);
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "10000 variants = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(5u, hvcf.get_n_opened_objects());
+
+	hvcf.close();
+	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+
+}
+
+
+TEST_F(HVCFTest, LDTest) {
+	std::chrono::time_point<std::chrono::system_clock> start, end;
+	std::chrono::duration<double> elapsed_seconds;
+	sph_umich_edu::HVCF hvcf;
+
+	hvcf.open("test_large.h5");
+	ASSERT_EQ(5u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(6u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	hvcf.compute_ld();
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(5u, hvcf.get_n_opened_objects());
+
+
+	hvcf.close();
+	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+
 }
