@@ -1343,14 +1343,12 @@ void HVCF::chunk_read_test(const string& chromosome, const string& lead_variant_
 
 }
 
-void HVCF::compute_ld() throw (HVCFReadException) {
-	auto chromosome_it = chromosomes.find("20"); //TODO: check if chromosome exists
+void HVCF::compute_ld(const string& chromosome, unsigned long long int start_position, unsigned long long end_position) throw (HVCFReadException) {
+	auto chromosome_it = chromosomes.find(chromosome); //TODO: check if chromosome exists
 
-//	long long int lead_variant_offset = get_variant_offset_by_name(chromosome, lead_variant_name); // TODO: check if exists
-	long long int start_position_offset = 0;
-	long long int end_position_offset = 4;
+	long long int start_position_offset = get_variant_offset_by_position(chromosome, start_position); // TODO: put 0 if not exists
+	long long int end_position_offset = get_variant_offset_by_position(chromosome, end_position); // TODO: put file_dims[0] - 1 offset if not exists
 
-//	cout << lead_variant_offset << " " << start_position_offset << " " << end_position_offset << endl;
 
 	HDF5DatasetIdentifier dataset_id;
 	HDF5DataspaceIdentifier file_dataspace_id;
@@ -1387,39 +1385,157 @@ void HVCF::compute_ld() throw (HVCFReadException) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while reading from dataset");
 	}
 
-//	int count[n_variants]{0};
-//	for (long long int i = 0; i < n_variants; ++i) {
-////		cout << (start_position_offset + i) << "=";
-//		for (hsize_t j = 0; j < n_haplotypes; ++j) {
-////			cout << ((int)haplotypes[i * n_haplotypes + j]);
-//			if ((int)haplotypes[i * n_haplotypes + j] == 1) {
-//				count[i]++;
-//			}
-//		}
-//		cout << " " << count[i];
-//	}
-//	cout << endl;
+	std::chrono::time_point<std::chrono::system_clock> start, end;
+	std::chrono::duration<double> elapsed_seconds;
+
+	start = std::chrono::system_clock::now();
+	unique_ptr<double[]> dbl_haplotypes = unique_ptr<double[]>(new double[n_variants * n_haplotypes]);
+	for (long long int i = 0; i < n_variants * n_haplotypes; ++i) {
+		dbl_haplotypes[i] = (double)haplotypes[i];
+	}
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	cout << "1: " << elapsed_seconds.count() << endl;
+
+//	Mat<double> S(dbl_haplotypes.get(), n_haplotypes, n_variants, false, false); // don't copy matrix.
+//	Row<double> J(n_haplotypes, fill::ones);
+//
+//	Mat<double> C1(J * S);
+//	Mat<double> C2(n_haplotypes - C1);
+//	Mat<double> M1(C1.t() * C1);
+//
+//	Mat<double> R((n_haplotypes * S.t() * S - M1) / sqrt(M1 % (C2.t() * C2)));
+
+	start = std::chrono::system_clock::now();
+	Mat<double> S(dbl_haplotypes.get(), n_haplotypes, n_variants);
+//	Mat<double> S(dbl_haplotypes.get(), n_haplotypes, n_variants, false, false); // don't copy matrix.
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	cout << "2: " << elapsed_seconds.count() << endl;
+
+	start = std::chrono::system_clock::now();
+	Row<double> J(n_haplotypes, fill::ones);
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	cout << "3: " << elapsed_seconds.count() << endl;
+
+	start = std::chrono::system_clock::now();
+	Mat<double> C1(J * S);
+	Mat<double> C2(n_haplotypes - C1);
+	Mat<double> M1(C1.t() * C1);
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	cout << "4: " << elapsed_seconds.count() << endl;
+
+	start = std::chrono::system_clock::now();
+	Mat<double> R((n_haplotypes * S.t() * S - M1) / sqrt(M1 % (C2.t() * C2)));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	cout << "5: " << elapsed_seconds.count() << endl;
+
+//	cout << "R:" << endl;
+//	R.raw_print();
+//
+//	cout << "Rsq:" << endl;
+//	cout << square(R) << endl;
+
+}
+
+void HVCF::compute_ld(const string& chromosome, const string& lead_variant_name, unsigned long long int start_position, unsigned long long end_position) throw (HVCFReadException) {
+	auto chromosome_it = chromosomes.find(chromosome); //TODO: check if chromosome exists
+
+	long long int lead_variant_offset = get_variant_offset_by_name(chromosome, lead_variant_name); // TODO: check if exists
+	long long int start_position_offset = get_variant_offset_by_position(chromosome, start_position); // TODO: put 0 if not exists
+	long long int end_position_offset = get_variant_offset_by_position(chromosome, end_position); // TODO: put file_dims[0] - 1 offset if not exists
+
+	HDF5DatasetIdentifier dataset_id;
+	HDF5DataspaceIdentifier file_dataspace_id;
+	HDF5DataspaceIdentifier memory_dataspace_id;
+
+	hsize_t n_samples = get_n_samples(); // TODO: compute this only once on file opening
+	hsize_t n_haplotypes = n_samples + n_samples; // TODO: compute this only once on file opening
+
+	hsize_t n_variants = 0;
+	hsize_t lead_variant_local_offset = 0;
+
+	if ((lead_variant_offset >= start_position_offset) && (lead_variant_offset <= end_position_offset)) {
+		n_variants = end_position_offset - start_position_offset + 1;
+		lead_variant_local_offset  = lead_variant_offset - start_position_offset;
+	} else {
+		n_variants = end_position_offset - start_position_offset + 2;
+		if (lead_variant_offset < start_position_offset) {
+			lead_variant_local_offset = 0;
+		} else {
+			lead_variant_local_offset = n_variants - 1;
+		}
+	}
+
+//	cout << lead_variant_offset << " " << start_position_offset << " " << end_position_offset << endl;
+//	cout << n_variants << " " << n_haplotypes << endl;
+
+	hsize_t file_offset1[2]{lead_variant_offset, 0};
+	hsize_t counts1[2]{1, n_haplotypes};
+	hsize_t file_offset2[2]{start_position_offset, 0};
+	hsize_t counts2[2]{end_position_offset - start_position_offset + 1, n_haplotypes};
+	hsize_t mem_dims[2]{n_variants, n_haplotypes};
+
+	unique_ptr<unsigned char[]> haplotypes = unique_ptr<unsigned char[]>(new unsigned char[n_variants * n_haplotypes]);
+
+	if ((dataset_id = H5Dopen(chromosome_it->second->get(), HAPLOTYPES_DATASET, H5P_DEFAULT)) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while opening dataset.");
+	}
+
+	if ((file_dataspace_id = H5Dget_space(dataset_id)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while getting dataspace.");
+	}
+
+	if ((memory_dataspace_id = H5Screate_simple(2, mem_dims, nullptr)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating memory dataspace.");
+	}
+
+	if (H5Sselect_hyperslab(file_dataspace_id, H5S_SELECT_SET, file_offset1, NULL, counts1, NULL) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while making selection in dataspace.");
+	}
+
+	if (H5Sselect_hyperslab(file_dataspace_id, H5S_SELECT_OR, file_offset2, NULL, counts2, NULL) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while making selection in dataspace.");
+	}
+
+	if (H5Dread(dataset_id, H5T_NATIVE_UCHAR, memory_dataspace_id, file_dataspace_id, H5P_DEFAULT, haplotypes.get()) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while reading from dataset");
+	}
 
 	unique_ptr<double[]> dbl_haplotypes = unique_ptr<double[]>(new double[n_variants * n_haplotypes]);
 	for (long long int i = 0; i < n_variants * n_haplotypes; ++i) {
 		dbl_haplotypes[i] = (double)haplotypes[i];
 	}
 
-	Mat<double> S(dbl_haplotypes.get(), n_haplotypes, n_variants);
+	Mat<double> S(dbl_haplotypes.get(), n_haplotypes, n_variants, false, false); // don't copy matrix.
+	Row<double> L(S.colptr(lead_variant_local_offset), n_haplotypes);
 	Row<double> J(n_haplotypes, fill::ones);
 
-	Mat<double> F1(J * S);
-	Mat<double> F2(n_haplotypes - F1);
+//  also correct
+//	Mat<double> C1(J * S);
+//	Mat<double> C2(n_haplotypes - C1);
+//	double l1 = C1(0, lead_variant_local_offset);
+//	double l2 = n_haplotypes - l1;
+//	Mat<double> M1(l1 * C1);
+//
+//	Mat<double> R((n_haplotypes * L * S - M1) / sqrt(M1 % (l2 * C2)));
 
-	Mat<double> E(n_haplotypes * S.t() * S - F1.t() * F1);
-	Mat<double> R(E / sqrt((F1.t() * F1) % (F2.t() * F2)));
+	Mat<double> LC1(J * L.t());
+	Mat<double> LC2(n_haplotypes - LC1);
+	Mat<double> SC1(J * S);
+	Mat<double> SC2(n_haplotypes - SC1);
+	Mat<double> M1(LC1 * SC1);
 
-	cout << "R:" << endl;
-	R.raw_print();
+	Mat<double> R((n_haplotypes * L * S - M1) / sqrt(M1 % (LC2 * SC2)));
 
-	cout << "Rsq:" << endl;
-	cout << square(R) << endl;
+//	cout << "R:" << endl;
+//	R.raw_print();
 
+//	cout << "Rsq:" << endl;
+//	cout << square(R) << endl;
 }
 
 unsigned int HVCF::get_n_opened_objects() const {
