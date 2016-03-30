@@ -15,7 +15,7 @@ CXX = g++
 CXXFLAGS = -std=c++11 -Wall -L/opt/local/lib/ -lz -L$(GTESTLIB) -L$(HDF5LIB) -lhdf5 -lgtest -larmadillo
 INCS = -I$(GTESTINCS) -I$(HDF5INCS)
 
-OBJECTS = HVCFTest.o Main_TestAll.o
+OBJECTS = HVCFTestReadWrite.o HVCFTestLD.o Main_TestAll.o
 
 .PHONY: all auxlibs applibs
 

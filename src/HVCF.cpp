@@ -177,10 +177,10 @@ hid_t HVCF::create_chromosome_group(const string& name) throw (HVCFWriteExceptio
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating group.");
 	}
 
-	dataset_id = create_haplotypes_dataset(group_id, 4000, 4000);
+	dataset_id = create_haplotypes_dataset(group_id, 2000, 4000);
 	dataset_id.close();
 
-	dataset_id = create_variants_dataset(group_id, 4000);
+	dataset_id = create_variants_dataset(group_id, 2000);
 	dataset_id.close();
 
 	return group_id.release();
@@ -926,8 +926,6 @@ void HVCF::flush_write_buffer() throw (HVCFWriteException) {
 		if (!buffers_it->second->is_empty()) {
 			write_haplotypes(entry.second->get(), buffers_it->second->get_haplotypes_buffer(), buffers_it->second->get_n_variants(), buffers_it->second->get_n_haplotypes());
 			write_variants(entry.second->get(), buffers_it->second->get_variants_buffer(), buffers_it->second->get_n_variants());
-//			write_names(entry.second->get(), buffer_it->second->get_names_buffer(), buffer_it->second->get_n_variants());
-//			write_positions(entry.second->get(), buffer_it->second->get_positions_buffer(), buffer_it->second->get_n_variants());
 			buffers_it->second->reset();
 		}
 	}
@@ -1351,10 +1349,9 @@ long long int HVCF::get_variant_offset_by_name(const string& chromosome, const s
 	return offset;
 }
 
-void HVCF::chunk_read_test(const string& chromosome, const string& lead_variant_name, unsigned long long int start_position, unsigned long long end_position) throw (HVCFReadException) {
+void HVCF::chunk_read_test(const string& chromosome, unsigned long long int start_position, unsigned long long end_position) throw (HVCFReadException) {
 	auto chromosome_it = chromosomes.find(chromosome); //TODO: check if chromosome exists
 
-	long long int lead_variant_offset = get_variant_offset_by_name(chromosome, lead_variant_name); // TODO: check if exists
 	long long int start_position_offset = get_variant_offset_by_position(chromosome, start_position); // TODO: put 0 if not exists
 	long long int end_position_offset = get_variant_offset_by_position(chromosome, end_position); // TODO: put file_dims[0] - 1 offset if not exists
 
