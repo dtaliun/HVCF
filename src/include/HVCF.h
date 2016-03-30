@@ -13,6 +13,7 @@
 #include <chrono>
 #include <armadillo>
 #include "hdf5.h"
+#include "Types.h"
 #include "HVCFOpenException.h"
 #include "HVCFCloseException.h"
 #include "HVCFWriteException.h"
@@ -33,31 +34,20 @@ namespace sph_umich_edu {
 
 class HVCF {
 private:
-	typedef struct {
-		char* string_value;
-		hsize_t offset;
-	} string_index_key_type;
-
-	typedef struct {
-		unsigned long long int ull_value;
-		hsize_t offset;
-	} ull_index_key_type;
-
 	string name;
 
 	HDF5FileIdentifier file_id;
 	HDF5GroupIdentifier samples_group_id;
-	HDF5GroupIdentifier variants_group_id;
-	HDF5DatasetIdentifier samples_all_dataset_id;
-	HDF5DatatypeIdentifier native_string_datatype_id;
+	HDF5GroupIdentifier chromosomes_group_id;
 
 	static constexpr unsigned int N_HASH_BUCKETS = 10000;
 	static constexpr char SAMPLES_GROUP[] = "samples";
-	static constexpr char VARIANTS_GROUP[] = "variants";
 	static constexpr char SAMPLES_ALL_DATASET[] = "ALL";
+	static constexpr char CHROMOSOMES_GROUP[] = "chromosomes";
+	static constexpr char VARIANTS_DATASET[] = "variants";
 	static constexpr char HAPLOTYPES_DATASET[] = "haplotypes";
-	static constexpr char VARIANT_NAMES_DATASET[] = "names";
-	static constexpr char VARIANT_POSITIONS_DATASET[] = "positions";
+	static constexpr char VARIABLE_LENGTH_STRING_TYPE[] = "variable_length_string_type";
+	static constexpr char VARIANTS_ENTRY_TYPE[] = "variants_entry_type";
 	static constexpr char STRING_INDEX_KEY_TYPE[] = "string_index_key_type";
 	static constexpr char ULL_INDEX_KEY_TYPE[] = "ull_index_key_type";
 	static constexpr char VARIANT_NAMES_INDEX[] = "names_hash_index";
@@ -65,17 +55,16 @@ private:
 
 	hid_t create_strings_1D_dataset(const string& name, hid_t group_id, hsize_t chunk_size) throw (HVCFWriteException);
 	hid_t create_hsize_1D_dataset(const string& name, hid_t group_id, hsize_t chunk_size) throw (HVCFWriteException);
-	hid_t create_ull_1D_dataset(const string& name, hid_t group_id, hsize_t chunk_size) throw (HVCFWriteException);
-	hid_t create_haplotypes_2D_dataset(const string& name, hid_t group_id, hsize_t variants_chunk_size, hsize_t samples_chunk_size) throw (HVCFWriteException);
+	hid_t create_haplotypes_dataset(hid_t group_id, hsize_t variants_chunk_size, hsize_t samples_chunk_size) throw (HVCFWriteException);
+	hid_t create_variants_dataset(hid_t group_id, hsize_t chunk_size) throw (HVCFWriteException);
 	hid_t create_chromosome_group(const string& name) throw (HVCFWriteException);
+
 	void write_haplotypes(hid_t group_id, const unsigned char* buffer, unsigned int n_variants, unsigned int n_haplotypes) throw (HVCFWriteException);
-	void write_names(hid_t group_id, char* const* buffer, unsigned int n_variants) throw (HVCFWriteException);
-	void write_positions(hid_t group_id, const unsigned long long int* buffer, unsigned int n_variants) throw (HVCFWriteException);
+	void write_variants(hid_t group_id, const variants_entry_type* buffer, unsigned int n_variants) throw (HVCFWriteException);
 
 	void write_positions_index_bucket(hid_t chromosome_group_id, const string& hash, const vector<hsize_t>& offsets) throw (HVCFWriteException);
 	void write_names_index_bucket(hid_t chromosome_group_id, const string& hash, const vector<hsize_t>& offsets) throw (HVCFWriteException);
-	void create_positions_index(const string& chromosome) throw (HVCFWriteException);
-	void create_names_index(const string& chromosome) throw (HVCFWriteException);
+	void create_indices(hid_t chromosome_group_id) throw (HVCFWriteException);
 
 	unordered_map<string, unique_ptr<HDF5GroupIdentifier>> chromosomes;
 	unordered_map<string, unique_ptr<WriteBuffer>> write_buffers;

@@ -6,6 +6,7 @@
 
 #include "../../../auxc/MiniVCF/src/include/VCFReader.h"
 #include "HVCFWriteException.h"
+#include "Types.h"
 
 using namespace std;
 
@@ -18,8 +19,7 @@ private:
 	unsigned int n_haplotypes;
 
 	unique_ptr<unsigned char[]> haplotypes;
-	unique_ptr<char*[]> names;
-	unique_ptr<unsigned long long int[]> positions;
+	unique_ptr<variants_entry_type[]> variants;
 
 	unsigned int n_variants;
 
@@ -34,8 +34,7 @@ public:
 	unsigned int get_n_variants() const;
 	unsigned int get_n_haplotypes() const;
 	const unsigned char* get_haplotypes_buffer() const;
-	char* const* get_names_buffer() const;
-	const unsigned long long int* get_positions_buffer() const;
+	const variants_entry_type* get_variants_buffer() const;
 	bool is_full() const;
 	bool is_empty() const;
 };

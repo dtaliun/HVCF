@@ -7,20 +7,22 @@ WriteBuffer::WriteBuffer(unsigned int max_variants, unsigned int n_samples):
 		n_samples(n_samples),
 		n_haplotypes(n_samples + n_samples),
 		haplotypes(nullptr),
-		names(nullptr),
-		positions(nullptr),
+		variants(nullptr),
 		n_variants(0u) {
 
 	haplotypes = unique_ptr<unsigned char[]>(new unsigned char[n_haplotypes * max_variants]{});
-	names = unique_ptr<char*[]>(new char*[max_variants]{nullptr});
-	positions = unique_ptr<unsigned long long int[]>(new unsigned long long int[max_variants]{});
+
+	variants = unique_ptr<variants_entry_type[]>(new variants_entry_type[max_variants]{});
+	for (unsigned int i = 0u; i < max_variants; ++i) {
+		variants[i].name = nullptr;
+	}
 }
 
 WriteBuffer::~WriteBuffer() {
 	for (unsigned int i = 0u; i < max_variants; ++i) {
-		if (names[i] != nullptr) {
-			delete names[i];
-			names[i] = nullptr;
+		if (variants[i].name != nullptr) {
+			delete variants[i].name;
+			variants[i].name = nullptr;
 		}
 	}
 }
@@ -53,18 +55,17 @@ void WriteBuffer::add_variant(const Variant& variant) throw (HVCFWriteException)
 	strcat(name.get(), "/");
 	strcat(name.get(), variant.get_alt().get_text().c_str());
 
-	names[n_variants] = name.release();
-
-	positions[n_variants] = variant.get_pos().get_value();
+	variants[n_variants].name = name.release();
+	variants[n_variants].position = variant.get_pos().get_value();
 
 	++n_variants;
 }
 
 void WriteBuffer::reset() {
 	for (unsigned int i = 0u; i < n_variants; ++i) {
-		if (names[i] != nullptr) {
-			delete names[i];
-			names[i] = nullptr;
+		if (variants[i].name != nullptr) {
+			delete variants[i].name;
+			variants[i].name = nullptr;
 		}
 	}
 	n_variants = 0u;
@@ -86,12 +87,8 @@ const unsigned char* WriteBuffer::get_haplotypes_buffer() const {
 	return haplotypes.get();
 }
 
-char* const* WriteBuffer::get_names_buffer() const {
-	return names.get();
-}
-
-const unsigned long long int* WriteBuffer::get_positions_buffer() const {
-	return positions.get();
+const variants_entry_type* WriteBuffer::get_variants_buffer() const {
+	return variants.get();
 }
 
 bool WriteBuffer::is_full() const {
