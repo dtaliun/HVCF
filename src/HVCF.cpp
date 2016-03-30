@@ -18,6 +18,18 @@ constexpr char HVCF::VARIANT_POSITIONS_INDEX[];
 HVCF::HVCF() {
 //	Disables automatic HDF5 error stack printing to stderr when function call returns negative value.
 //	H5Eset_auto(H5E_DEFAULT, nullptr, nullptr);
+
+	char* blosc_version = nullptr;
+	char* blosc_date = nullptr;
+	int status = 0;
+
+	status = register_blosc(&blosc_version, &blosc_date);
+	if (status >= 0) {
+		cout << "Blosc registered: " << blosc_version << " " << blosc_date << endl;
+	} else {
+		cout << "Blosc was not registered" << endl;
+	}
+
 }
 
 HVCF::~HVCF() {
@@ -117,10 +129,25 @@ hid_t HVCF::create_haplotypes_dataset(hid_t group_id, hsize_t variants_chunk_siz
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataset property.");
 	}
 
-	if ((H5Pset_chunk(dataset_property_id, 2, chunk_dims) < 0) || (H5Pset_deflate(dataset_property_id, 9) < 0)) {
+//	GZIP compression
+//	if ((H5Pset_chunk(dataset_property_id, 2, chunk_dims) < 0) || (H5Pset_deflate(dataset_property_id, 9) < 0)) {
+//		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
+//	}
+
+//	Trying blosc compression
+	unsigned int cd_values[7];
+	// compression level
+	cd_values[4] = 9;
+	// 0 -- shuffle not active, 1 -- shuffle active
+	cd_values[5] = 1;
+	// Compressor to use
+	cd_values[6] = BLOSC_LZ4HC; // does better but slower compression. decompression is still very fast.
+
+	if ((H5Pset_chunk(dataset_property_id, 2, chunk_dims) < 0) || (H5Pset_filter(dataset_property_id, FILTER_BLOSC, H5Z_FLAG_OPTIONAL, 7, cd_values) < 0)) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
 	}
 
+// 	Trying SZIP compression
 //	if ((H5Pset_chunk(dataset_property_id, 2, chunk_dims) < 0) || (H5Pset_szip(dataset_property_id, H5_SZIP_NN_OPTION_MASK, 32) < 0)) {
 //		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
 //	}
@@ -154,7 +181,21 @@ hid_t HVCF::create_variants_dataset(hid_t group_id, hsize_t chunk_size) throw (H
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataset property.");
 	}
 
-	if ((H5Pset_chunk(dataset_property_id, 1, chunk_dims) < 0) || (H5Pset_deflate(dataset_property_id, 9) < 0)) {
+//	GZIP compression
+//	if ((H5Pset_chunk(dataset_property_id, 1, chunk_dims) < 0) || (H5Pset_deflate(dataset_property_id, 9) < 0)) {
+//		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
+//	}
+
+//	Trying blosc compression
+	unsigned int cd_values[7];
+	// compression level
+	cd_values[4] = 9;
+	// 0 -- shuffle not active, 1 -- shuffle active
+	cd_values[5] = 1;
+	// Compressor to use
+	cd_values[6] = BLOSC_LZ4HC; // does better but slower compression. decompression is still very fast.
+
+	if ((H5Pset_chunk(dataset_property_id, 1, chunk_dims) < 0) || (H5Pset_filter(dataset_property_id, FILTER_BLOSC, H5Z_FLAG_OPTIONAL, 7, cd_values) < 0)) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
 	}
 
@@ -910,8 +951,10 @@ void HVCF::write_variant(const Variant& variant) throw (HVCFWriteException) {
 
 	if (buffers_it->second->is_full()) {
 		//flush!
+		cout << "flush " << buffers_it->second->get_n_variants() << endl;
 		write_haplotypes(chromosomes_it->second->get(), buffers_it->second->get_haplotypes_buffer(), buffers_it->second->get_n_variants(), buffers_it->second->get_n_haplotypes());
 		write_variants(chromosomes_it->second->get(), buffers_it->second->get_variants_buffer(), buffers_it->second->get_n_variants());
+		cout << "flushed" << endl;
 		buffers_it->second->reset();
 	}
 

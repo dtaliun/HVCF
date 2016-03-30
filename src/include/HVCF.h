@@ -26,6 +26,7 @@
 #include "HDF5PropertyIdentifier.h"
 #include "../../../auxc/MiniVCF/src/include/VCFReader.h"
 #include "WriteBuffer.h"
+#include "../blosc/blosc_filter.h"
 
 using namespace std;
 using namespace arma;

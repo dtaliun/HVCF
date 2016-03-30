@@ -2,6 +2,8 @@ GTESTLIB = /Users/dtaliun/Documents/gtest/googletest/cmake/test/
 GTESTINCS = /Users/dtaliun/Documents/gtest/googletest/include/
 HDF5LIB=/Users/dtaliun/Documents/hdf5-1.10.0-pre2/hdf5/lib
 HDF5INCS=/Users/dtaliun/Documents/hdf5-1.10.0-pre2/hdf5/include
+BLOSCLIB=/Users/dtaliun/Documents/c-blosc-1.7.1/blosc
+BLOSCINCS=/Users/dtaliun/Documents/c-blosc-1.7.1/blosc
 
 AUXLIBS = ../../auxc/FileReader/src/*.o \
 		../../auxc/MiniVCF/src/*.o
@@ -11,15 +13,23 @@ AUXDIRS = ../../auxc/FileReader/src \
 APPLIBS = ../src/*.o
 APPDIRS = ../src
 
+BLOSCLIBS = ../src/blosc/*.o
+BLOSCDIRS = ../src/blosc
+
 CXX = g++
-CXXFLAGS = -std=c++11 -Wall -L/opt/local/lib/ -lz -L$(GTESTLIB) -L$(HDF5LIB) -lhdf5 -lgtest -larmadillo
-INCS = -I$(GTESTINCS) -I$(HDF5INCS)
+CXXFLAGS = -std=c++11 -Wall -L/opt/local/lib/ -lz -L$(GTESTLIB) -L$(HDF5LIB) -L$(BLOSCLIB) -lhdf5 -lblosc -lgtest -larmadillo
+INCS = -I$(GTESTINCS) -I$(HDF5INCS) -I$(BLOSCINCS)
 
 OBJECTS = HVCFTestReadWrite.o HVCFTestLD.o Main_TestAll.o
 
-.PHONY: all auxlibs applibs
+.PHONY: all blosclibs auxlibs applibs
 
-all: auxlibs applibs testAll
+all: blosclibs auxlibs applibs testAll
+
+blosclibs:
+	@for bloscdir in $(BLOSCDIRS); do \
+		(cd $${bloscdir} && make -j 4) || exit 1; \
+	done
 
 auxlibs:
 	@for auxdir in $(AUXDIRS); do \
@@ -32,10 +42,10 @@ applibs:
 	done
 
 testAll: $(OBJECTS)
-	$(CXX) $(CXXFLAGS) $(INCS) -o $@ $(OBJECTS) $(AUXLIBS) $(APPLIBS)
+	$(CXX) $(CXXFLAGS) $(INCS) -o $@ $(OBJECTS) $(BLOSCLIBS) $(AUXLIBS) $(APPLIBS)
 	
 .cpp.o:
 	$(CXX) $(CXXFLAGS) $(INCS) -c -o $@ $<
 	
 clean:
-	rm -f testAll *.o  ../src/*.o
+	rm -f testAll *.o  ../src/*.o ../src/blosc/*.o
