@@ -6,6 +6,14 @@
 namespace sph_umich_edu {
 
 typedef struct {
+	unsigned long long int ull_value_1;
+	unsigned long long int ull_value_2;
+	hsize_t offset_1;
+	hsize_t offset_2;
+	hobj_ref_t obj_reference;
+} interval_index_key_type;
+
+typedef struct {
 	char* string_value;
 	hsize_t offset;
 } string_index_key_type;

@@ -12,6 +12,7 @@ all: HVCFException.o \
 	HVCFCloseException.o \
 	HVCFWriteException.o \
 	HVCFReadException.o \
+	HVCFCreateException.o \
 	HDF5Identifier.o \
 	HDF5FileIdentifier.o \
 	HDF5GroupIdentifier.o \

@@ -155,49 +155,183 @@ TEST_F(HVCFTestReadWrite, VariantLookupByPosition) {
 	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
 	ASSERT_EQ(6u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
-	ASSERT_EQ(-1, hvcf.get_variant_offset_by_position("XYZ", 60343ul));
+	// --
+	ASSERT_EQ(-1, hvcf.get_variant_offset_by_position_eq("XYZ", 60343ul));
+	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
+
+	ASSERT_EQ(-1, hvcf.get_variant_offset_by_position_ge("XYZ", 60343ul));
+	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
+
+	ASSERT_EQ(-1, hvcf.get_variant_offset_by_position_le("XYZ", 60343ul));
+	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
+
+	// --
+	start = std::chrono::system_clock::now();
+	ASSERT_LE(-1, hvcf.get_variant_offset_by_position_eq("20", 0ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (eq) = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
 
 	start = std::chrono::system_clock::now();
-	ASSERT_LE(-1, hvcf.get_variant_offset_by_position("20", 0ul));
+	ASSERT_LE(0, hvcf.get_variant_offset_by_position_ge("20", 0ul));
 	end = std::chrono::system_clock::now();
 	elapsed_seconds = end - start;
-	GTEST_LOG_(INFO) << "Lookup by single position = " << elapsed_seconds.count() << " sec";
+	GTEST_LOG_(INFO) << "Lookup by single position (ge) = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
 
 	start = std::chrono::system_clock::now();
-	ASSERT_EQ(0, hvcf.get_variant_offset_by_position("20", 60343ul));
+	ASSERT_LE(-1, hvcf.get_variant_offset_by_position_le("20", 0ul));
 	end = std::chrono::system_clock::now();
 	elapsed_seconds = end - start;
-	GTEST_LOG_(INFO) << "Lookup by single position = " << elapsed_seconds.count() << " sec";
+	GTEST_LOG_(INFO) << "Lookup by single position (le) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
+
+	// --
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(0, hvcf.get_variant_offset_by_position_ge("20", 60000ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (ge) = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
 
 	start = std::chrono::system_clock::now();
-	ASSERT_EQ(6202, hvcf.get_variant_offset_by_position("20", 263529ul));
+	ASSERT_EQ(-1, hvcf.get_variant_offset_by_position_le("20", 60000ul));
 	end = std::chrono::system_clock::now();
 	elapsed_seconds = end - start;
-	GTEST_LOG_(INFO) << "Lookup by single position = " << elapsed_seconds.count() << " sec";
+	GTEST_LOG_(INFO) << "Lookup by single position (le) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
+
+	// --
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(0, hvcf.get_variant_offset_by_position_eq("20", 60343ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (eq) = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
 
 	start = std::chrono::system_clock::now();
-	ASSERT_EQ(9929, hvcf.get_variant_offset_by_position("20", 372328ul));
+	ASSERT_EQ(0, hvcf.get_variant_offset_by_position_ge("20", 60343ul));
 	end = std::chrono::system_clock::now();
 	elapsed_seconds = end - start;
-	GTEST_LOG_(INFO) << "Lookup by single position = " << elapsed_seconds.count() << " sec";
+	GTEST_LOG_(INFO) << "Lookup by single position (ge) = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
 
 	start = std::chrono::system_clock::now();
-	ASSERT_EQ(-1, hvcf.get_variant_offset_by_position("20", 372004ul));
+	ASSERT_EQ(0, hvcf.get_variant_offset_by_position_le("20", 60343ul));
 	end = std::chrono::system_clock::now();
 	elapsed_seconds = end - start;
-	GTEST_LOG_(INFO) << "Lookup by single position = " << elapsed_seconds.count() << " sec";
+	GTEST_LOG_(INFO) << "Lookup by single position (le) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
+
+	// --
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(6202, hvcf.get_variant_offset_by_position_eq("20", 263529ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (eq) = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
 
 	start = std::chrono::system_clock::now();
-	ASSERT_EQ(-1, hvcf.get_variant_offset_by_position("20", 3372004ul));
+	ASSERT_EQ(6202, hvcf.get_variant_offset_by_position_ge("20", 263529ul));
 	end = std::chrono::system_clock::now();
 	elapsed_seconds = end - start;
-	GTEST_LOG_(INFO) << "Lookup by single position = " << elapsed_seconds.count() << " sec";
+	GTEST_LOG_(INFO) << "Lookup by single position (ge) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(6202, hvcf.get_variant_offset_by_position_le("20", 263529ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (le) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
+
+	// --
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(9929, hvcf.get_variant_offset_by_position_eq("20", 372328ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (eq) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(9929, hvcf.get_variant_offset_by_position_ge("20", 372328ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (ge) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(9929, hvcf.get_variant_offset_by_position_le("20", 372328ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (le) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
+
+	// --
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(-1, hvcf.get_variant_offset_by_position_eq("20", 372004ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (eq) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(9915, hvcf.get_variant_offset_by_position_ge("20", 372004ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (ge) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(9914, hvcf.get_variant_offset_by_position_le("20", 372004ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (le) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
+
+	// --
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(-1, hvcf.get_variant_offset_by_position_eq("20", 348210ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (eq) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(9000, hvcf.get_variant_offset_by_position_ge("20", 348210ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (ge) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(8999, hvcf.get_variant_offset_by_position_le("20", 348210ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (le) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
+
+	// --
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(-1, hvcf.get_variant_offset_by_position_eq("20", 3372004ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (eq) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(-1, hvcf.get_variant_offset_by_position_ge("20", 3372004ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (ge) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(9929, hvcf.get_variant_offset_by_position_le("20", 3372004ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (le) = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
 
 	hvcf.close();
@@ -293,51 +427,149 @@ TEST_F(HVCFTestReadWrite, LargeFileTest) {
 	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
 	ASSERT_EQ(4u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
-	ASSERT_EQ(-1, hvcf.get_variant_offset_by_position("XYZ", 60343ul));
+	// --
+	ASSERT_EQ(-1, hvcf.get_variant_offset_by_position_eq("XYZ", 60343ul));
+	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+
+	ASSERT_EQ(-1, hvcf.get_variant_offset_by_position_ge("XYZ", 60343ul));
+	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+
+	ASSERT_EQ(-1, hvcf.get_variant_offset_by_position_le("XYZ", 60343ul));
+	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+
+	// --
+	start = std::chrono::system_clock::now();
+	ASSERT_LE(-1, hvcf.get_variant_offset_by_position_eq("20", 0ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (eq) = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
 
 	start = std::chrono::system_clock::now();
-	ASSERT_LE(-1, hvcf.get_variant_offset_by_position("20", 0ul));
+	ASSERT_LE(0, hvcf.get_variant_offset_by_position_ge("20", 0ul));
 	end = std::chrono::system_clock::now();
 	elapsed_seconds = end - start;
-	GTEST_LOG_(INFO) << "Lookup by single position = " << elapsed_seconds.count() << " sec";
+	GTEST_LOG_(INFO) << "Lookup by single position (ge) = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
 
 	start = std::chrono::system_clock::now();
-	ASSERT_EQ(0, hvcf.get_variant_offset_by_position("20", 60795ul));
+	ASSERT_LE(-1, hvcf.get_variant_offset_by_position_le("20", 0ul));
 	end = std::chrono::system_clock::now();
 	elapsed_seconds = end - start;
-	GTEST_LOG_(INFO) << "Lookup by single position = " << elapsed_seconds.count() << " sec";
+	GTEST_LOG_(INFO) << "Lookup by single position (le) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+
+	// --
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(0, hvcf.get_variant_offset_by_position_eq("20", 60795ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (eq) = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
 
 	start = std::chrono::system_clock::now();
-	ASSERT_EQ(256157, hvcf.get_variant_offset_by_position("20", 32959324ul));
+	ASSERT_EQ(0, hvcf.get_variant_offset_by_position_ge("20", 60795ul));
 	end = std::chrono::system_clock::now();
 	elapsed_seconds = end - start;
-	GTEST_LOG_(INFO) << "Lookup by single position = " << elapsed_seconds.count() << " sec";
+	GTEST_LOG_(INFO) << "Lookup by single position (ge) = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
 
 	start = std::chrono::system_clock::now();
-	ASSERT_EQ(520853, hvcf.get_variant_offset_by_position("20", 62963628ul));
+	ASSERT_EQ(0, hvcf.get_variant_offset_by_position_le("20", 60795ul));
 	end = std::chrono::system_clock::now();
 	elapsed_seconds = end - start;
-	GTEST_LOG_(INFO) << "Lookup by single position = " << elapsed_seconds.count() << " sec";
+	GTEST_LOG_(INFO) << "Lookup by single position (le) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+
+	// --
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(256157, hvcf.get_variant_offset_by_position_eq("20", 32959324ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (eq) = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
 
 	start = std::chrono::system_clock::now();
-	ASSERT_EQ(-1, hvcf.get_variant_offset_by_position("20", 372004ul));
+	ASSERT_EQ(256157, hvcf.get_variant_offset_by_position_ge("20", 32959324ul));
 	end = std::chrono::system_clock::now();
 	elapsed_seconds = end - start;
-	GTEST_LOG_(INFO) << "Lookup by single position = " << elapsed_seconds.count() << " sec";
+	GTEST_LOG_(INFO) << "Lookup by single position (eq) = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
 
 	start = std::chrono::system_clock::now();
-	ASSERT_EQ(-1, hvcf.get_variant_offset_by_position("20", 3372004ul));
+	ASSERT_EQ(256157, hvcf.get_variant_offset_by_position_le("20", 32959324ul));
 	end = std::chrono::system_clock::now();
 	elapsed_seconds = end - start;
-	GTEST_LOG_(INFO) << "Lookup by single position = " << elapsed_seconds.count() << " sec";
+	GTEST_LOG_(INFO) << "Lookup by single position (eq) = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
 
+	// --
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(520853, hvcf.get_variant_offset_by_position_eq("20", 62963628ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (eq) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(520853, hvcf.get_variant_offset_by_position_ge("20", 62963628ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (ge) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(520853, hvcf.get_variant_offset_by_position_le("20", 62963628ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (le) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+
+	// --
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(-1, hvcf.get_variant_offset_by_position_eq("20", 167311ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (eq) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(1000, hvcf.get_variant_offset_by_position_ge("20", 167311ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (ge) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(999, hvcf.get_variant_offset_by_position_le("20", 167311ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (ge) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+
+	//--
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(-1, hvcf.get_variant_offset_by_position_eq("20", 3372004ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (eq) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(30449, hvcf.get_variant_offset_by_position_ge("20", 3372004ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (ge) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(30448, hvcf.get_variant_offset_by_position_le("20", 3372004ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (le) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+
+	// --
 	ASSERT_EQ(-1, hvcf.get_variant_offset_by_name("XYZ", "20:60343_G/A"));
 	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
 
