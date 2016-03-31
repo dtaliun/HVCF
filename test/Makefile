@@ -1,7 +1,7 @@
 GTESTLIB = /Users/dtaliun/Documents/gtest/googletest/cmake/test/
 GTESTINCS = /Users/dtaliun/Documents/gtest/googletest/include/
-HDF5LIB=/Users/dtaliun/Documents/hdf5-1.10.0-pre2/hdf5/lib
-HDF5INCS=/Users/dtaliun/Documents/hdf5-1.10.0-pre2/hdf5/include
+HDF5LIB=/Users/dtaliun/Documents/hdf5-1.10.0/hdf5/lib
+HDF5INCS=/Users/dtaliun/Documents/hdf5-1.10.0/hdf5/include
 BLOSCLIB=/Users/dtaliun/Documents/c-blosc-1.7.1/blosc
 BLOSCINCS=/Users/dtaliun/Documents/c-blosc-1.7.1/blosc
 
