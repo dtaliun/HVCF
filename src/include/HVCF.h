@@ -108,8 +108,8 @@ public:
 	long long int get_variant_offset_by_position_le(const string& chromosome, unsigned long long int position) throw (HVCFReadException);
 	long long int get_variant_offset_by_name(const string& chromosome, const string& name) throw (HVCFReadException);
 
-	vector<variants_pair> compute_ld(const string& chromosome, unsigned long long int start_position, unsigned long long end_position) throw (HVCFReadException);
-	vector<variants_pair> compute_ld(const string& chromosome, const string& lead_variant_name, unsigned long long int start_position, unsigned long long end_position) throw (HVCFReadException);
+	void compute_ld(const string& chromosome, unsigned long long int start_position, unsigned long long end_position, vector<variants_pair>& result) throw (HVCFReadException);
+	void compute_ld(const string& chromosome, const string& lead_variant_name, unsigned long long int start_position, unsigned long long end_position, vector<variants_pair>& result) throw (HVCFReadException);
 
 	unsigned int get_n_opened_objects() const;
 	static unsigned int get_n_all_opened_objects();

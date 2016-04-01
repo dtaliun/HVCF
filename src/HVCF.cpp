@@ -1757,28 +1757,26 @@ long long int HVCF::get_variant_offset_by_name(const string& chromosome, const s
 	return offset;
 }
 
-vector<variants_pair> HVCF::compute_ld(const string& chromosome, unsigned long long int start_position, unsigned long long end_position) throw (HVCFReadException) {
-	vector<variants_pair> result;
-
+void HVCF::compute_ld(const string& chromosome, unsigned long long int start_position, unsigned long long end_position, vector<variants_pair>& result) throw (HVCFReadException) {
 	auto chromosome_it = chromosomes.find(chromosome);
 
 	if (chromosome_it == chromosomes.end()) {
-		return result;
+		return;
 	}
 
 	if (end_position < start_position) {
-		return result;
+		return;
 	}
 
 	long long int start_position_offset = 0;
 	long long int end_position_offset = 0;
 
 	if ((start_position_offset = get_variant_offset_by_position_eq(chromosome, start_position)) < 0) {
-		return result;
+		return;
 	}
 
 	if ((end_position_offset = get_variant_offset_by_position_eq(chromosome, end_position)) < 0) {
-		return result;
+		return;
 	}
 
 	HDF5DatasetIdentifier dataset_id;
@@ -1884,21 +1882,17 @@ vector<variants_pair> HVCF::compute_ld(const string& chromosome, unsigned long l
 	if (H5Dvlen_reclaim(variants_entry_memory_datatype_id, memory_dataspace_id, H5P_DEFAULT, variants_buffer) < 0) {
 		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while reclaiming HDF5 memory.");
 	}
-
-	return result;
 }
 
-vector<variants_pair> HVCF::compute_ld(const string& chromosome, const string& lead_variant_name, unsigned long long int start_position, unsigned long long end_position) throw (HVCFReadException) {
-	vector<variants_pair> result;
-
+void HVCF::compute_ld(const string& chromosome, const string& lead_variant_name, unsigned long long int start_position, unsigned long long end_position, vector<variants_pair>& result) throw (HVCFReadException) {
 	auto chromosome_it = chromosomes.find(chromosome);
 
 	if (chromosome_it == chromosomes.end()) {
-		return result;
+		return;
 	}
 
 	if (end_position < start_position) {
-		return result;
+		return;
 	}
 
 	long long int lead_variant_offset = 0;
@@ -1906,15 +1900,15 @@ vector<variants_pair> HVCF::compute_ld(const string& chromosome, const string& l
 	long long int end_position_offset = 0;
 
 	if ((lead_variant_offset = get_variant_offset_by_name(chromosome, lead_variant_name)) < 0) {
-		return result;
+		return;
 	}
 
 	if ((start_position_offset = get_variant_offset_by_position_ge(chromosome, start_position)) < 0) {
-		return result;
+		return;
 	}
 
 	if ((end_position_offset = get_variant_offset_by_position_le(chromosome, end_position)) < 0) {
-		return result;
+		return;
 	}
 
 	HDF5DatasetIdentifier dataset_id;
@@ -2056,7 +2050,7 @@ vector<variants_pair> HVCF::compute_ld(const string& chromosome, const string& l
 		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while reclaiming HDF5 memory.");
 	}
 
-	return result;
+	return;
 }
 
 unsigned int HVCF::get_n_opened_objects() const {

@@ -57,15 +57,8 @@ typedef struct VariantsPair{
 		rsquare = pair.rsquare;
 	};
 
-	VariantsPair& operator=(VariantsPair&& pair) {
-		name1 = std::move(pair.name1);
-		position1 = pair.position1;
-		name2 = std::move(pair.name2);
-		position2 = pair.position2;
-		r = pair.r;
-		rsquare = pair.rsquare;
-		return *this;
-	};
+	VariantsPair& operator=(VariantsPair&& pair) = delete;
+
 } variants_pair;
 
 }

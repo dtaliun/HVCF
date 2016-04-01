@@ -636,41 +636,6 @@ TEST_F(HVCFTestReadWrite, ChunkReadTest) {
 	GTEST_LOG_(INFO) << "100000 variants = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
 
-//	start = std::chrono::system_clock::now();
-//	hvcf.compute_ld("20", 61955ul, 167900ul);
-//	end = std::chrono::system_clock::now();
-//	elapsed_seconds = end - start;
-//	GTEST_LOG_(INFO) << "1000 variants pairwise LD = " << elapsed_seconds.count() << " sec";
-//	ASSERT_EQ(5u, hvcf.get_n_opened_objects());
-//
-//	start = std::chrono::system_clock::now();
-//	hvcf.compute_ld("20", "20:61955_C/T", 61955ul, 167900ul);
-//	end = std::chrono::system_clock::now();
-//	elapsed_seconds = end - start;
-//	GTEST_LOG_(INFO) << "1000 variants vs 1 LD = " << elapsed_seconds.count() << " sec";
-//	ASSERT_EQ(5u, hvcf.get_n_opened_objects());
-//
-//	start = std::chrono::system_clock::now();
-//	hvcf.compute_ld("20", 3322215ul, 4397713ul);
-//	end = std::chrono::system_clock::now();
-//	elapsed_seconds = end - start;
-//	GTEST_LOG_(INFO) << "10000 variants pairwise LD = " << elapsed_seconds.count() << " sec";
-//	ASSERT_EQ(5u, hvcf.get_n_opened_objects());
-//
-//	start = std::chrono::system_clock::now();
-//	hvcf.compute_ld("20", "20:3514537_T/C", 3322215ul, 4397713ul);
-//	end = std::chrono::system_clock::now();
-//	elapsed_seconds = end - start;
-//	GTEST_LOG_(INFO) << "10000 variants vs 1 LD = " << elapsed_seconds.count() << " sec";
-//	ASSERT_EQ(5u, hvcf.get_n_opened_objects());
-//
-//	start = std::chrono::system_clock::now();
-//	hvcf.compute_ld("20", "20:3514537_T/C", 3322215ul, 14879114ul);
-//	end = std::chrono::system_clock::now();
-//	elapsed_seconds = end - start;
-//	GTEST_LOG_(INFO) << "100000 variants vs 1 LD = " << elapsed_seconds.count() << " sec";
-//	ASSERT_EQ(5u, hvcf.get_n_opened_objects());
-
 	hvcf.close();
 	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());

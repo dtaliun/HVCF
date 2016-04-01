@@ -91,6 +91,7 @@ TEST_F(HVCFTestLD, LD) {
 	std::chrono::duration<double> elapsed_seconds;
 	sph_umich_edu::HVCF hvcf;
 	sph_umich_edu::VCFReader vcf;
+	vector<sph_umich_edu::variants_pair> result;
 
 	// BEGIN: create test HVCF file.
 	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
@@ -125,10 +126,9 @@ TEST_F(HVCFTestLD, LD) {
 	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
 	ASSERT_EQ(4u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
-	vector<sph_umich_edu::variants_pair> result;
-
 	start = std::chrono::system_clock::now();
-	result = hvcf.compute_ld("20", 11650214ul, 60759931ul);
+	result.clear();
+	hvcf.compute_ld("20", 11650214ul, 60759931ul, result);
 	end = std::chrono::system_clock::now();
 	elapsed_seconds = end - start;
 	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
@@ -142,8 +142,9 @@ TEST_F(HVCFTestLD, LD) {
 	}
 	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
 
+	result.clear();
 	start = std::chrono::system_clock::now();
-	result = hvcf.compute_ld("20", 11650214ul, 11650214ul);
+	hvcf.compute_ld("20", 11650214ul, 11650214ul, result);
 	end = std::chrono::system_clock::now();
 	elapsed_seconds = end - start;
 	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
@@ -157,8 +158,9 @@ TEST_F(HVCFTestLD, LD) {
 	}
 	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
 
+	result.clear();
 	start = std::chrono::system_clock::now();
-	result = hvcf.compute_ld("20", 160759931ul, 260759931ul);
+	hvcf.compute_ld("20", 160759931ul, 260759931ul, result);
 	end = std::chrono::system_clock::now();
 	elapsed_seconds = end - start;
 	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
@@ -172,8 +174,9 @@ TEST_F(HVCFTestLD, LD) {
 	}
 	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
 
+	result.clear();
 	start = std::chrono::system_clock::now();
-	result = hvcf.compute_ld("20", "20:11650214_G/A", 14403183ul, 55378791ul);
+	hvcf.compute_ld("20", "20:11650214_G/A", 14403183ul, 55378791ul, result);
 	end = std::chrono::system_clock::now();
 	elapsed_seconds = end - start;
 	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
@@ -187,8 +190,9 @@ TEST_F(HVCFTestLD, LD) {
 	}
 	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
 
+	result.clear();
 	start = std::chrono::system_clock::now();
-	result = hvcf.compute_ld("20", "20:60759931_C/T", 14403183ul, 55378791ul);
+	hvcf.compute_ld("20", "20:60759931_C/T", 14403183ul, 55378791ul, result);
 	end = std::chrono::system_clock::now();
 	elapsed_seconds = end - start;
 	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
@@ -202,8 +206,9 @@ TEST_F(HVCFTestLD, LD) {
 	}
 	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
 
+	result.clear();
 	start = std::chrono::system_clock::now();
-	result = hvcf.compute_ld("20", "20:46211051_A/G", 14403183ul, 55378791ul);
+	hvcf.compute_ld("20", "20:46211051_A/G", 14403183ul, 55378791ul, result);
 	end = std::chrono::system_clock::now();
 	elapsed_seconds = end - start;
 	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
@@ -217,8 +222,9 @@ TEST_F(HVCFTestLD, LD) {
 	}
 	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
 
+	result.clear();
 	start = std::chrono::system_clock::now();
-	result = hvcf.compute_ld("20", "20:46211051_A/G", 19485821ul, 19485821ul);
+	hvcf.compute_ld("20", "20:46211051_A/G", 19485821ul, 19485821ul, result);
 	end = std::chrono::system_clock::now();
 	elapsed_seconds = end - start;
 	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
@@ -232,8 +238,9 @@ TEST_F(HVCFTestLD, LD) {
 	}
 	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
 
+	result.clear();
 	start = std::chrono::system_clock::now();
-	result = hvcf.compute_ld("20", "20:19485821_A/G", 19485821ul, 19485821ul);
+	hvcf.compute_ld("20", "20:19485821_A/G", 19485821ul, 19485821ul, result);
 	end = std::chrono::system_clock::now();
 	elapsed_seconds = end - start;
 	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
@@ -247,8 +254,9 @@ TEST_F(HVCFTestLD, LD) {
 	}
 	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
 
+	result.clear();
 	start = std::chrono::system_clock::now();
-	result = hvcf.compute_ld("20", "20:46211051_A/G", 16600000ul, 50000000ul);
+	hvcf.compute_ld("20", "20:46211051_A/G", 16600000ul, 50000000ul, result);
 	end = std::chrono::system_clock::now();
 	elapsed_seconds = end - start;
 	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
@@ -262,8 +270,9 @@ TEST_F(HVCFTestLD, LD) {
 	}
 	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
 
+	result.clear();
 	start = std::chrono::system_clock::now();
-	result = hvcf.compute_ld("20", "20:46211051_A/G", 100ul, 16600000ul);
+	hvcf.compute_ld("20", "20:46211051_A/G", 100ul, 16600000ul, result);
 	end = std::chrono::system_clock::now();
 	elapsed_seconds = end - start;
 	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
@@ -277,8 +286,9 @@ TEST_F(HVCFTestLD, LD) {
 	}
 	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
 
+	result.clear();
 	start = std::chrono::system_clock::now();
-	result = hvcf.compute_ld("20", "20:46211051_A/G", 50000000ul, 166000000ul);
+	hvcf.compute_ld("20", "20:46211051_A/G", 50000000ul, 166000000ul, result);
 	end = std::chrono::system_clock::now();
 	elapsed_seconds = end - start;
 	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
@@ -292,8 +302,9 @@ TEST_F(HVCFTestLD, LD) {
 	}
 	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
 
+	result.clear();
 	start = std::chrono::system_clock::now();
-	result = hvcf.compute_ld("20", "20:46211051_A/G", 166000000ul, 166000000ul);
+	hvcf.compute_ld("20", "20:46211051_A/G", 166000000ul, 166000000ul, result);
 	end = std::chrono::system_clock::now();
 	elapsed_seconds = end - start;
 	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
@@ -311,4 +322,62 @@ TEST_F(HVCFTestLD, LD) {
 	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
+}
+
+TEST_F(HVCFTestLD, LargeLD) {
+	std::chrono::time_point<std::chrono::system_clock> start, end;
+	std::chrono::duration<double> elapsed_seconds;
+	sph_umich_edu::HVCF hvcf;
+	vector<sph_umich_edu::variants_pair> result;
+
+	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+
+	hvcf.open("test_large.h5");
+	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(4u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+
+	result.clear();
+	start = std::chrono::system_clock::now();
+	hvcf.compute_ld("20", 61955ul, 167900ul, result);
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "1000 variants pairwise LD = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+
+	result.clear();
+	start = std::chrono::system_clock::now();
+	hvcf.compute_ld("20", "20:61955_C/T", 61955ul, 167900ul, result);
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "1000 variants vs 1 LD = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+
+	result.clear();
+	start = std::chrono::system_clock::now();
+	hvcf.compute_ld("20", 3322215ul, 4397713ul, result);
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "10000 variants pairwise LD = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+
+	result.clear();
+	start = std::chrono::system_clock::now();
+	hvcf.compute_ld("20", "20:3514537_T/C", 3322215ul, 4397713ul, result);
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "10000 variants vs 1 LD = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+
+	result.clear();
+	start = std::chrono::system_clock::now();
+	hvcf.compute_ld("20", "20:3514537_T/C", 3322215ul, 14879114ul, result);
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "100000 variants vs 1 LD = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+
+	hvcf.close();
+	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
