@@ -58,9 +58,11 @@ protected:
 			}
 
 			precomputed_ld_it = precomputed_ld.emplace(position1, unordered_map<unsigned long long int, double>()).first;
+			precomputed_ld_it->second.emplace(position1, 1.0);
 			precomputed_ld_it->second.emplace(position2, rsquare);
 
 			precomputed_ld_it = precomputed_ld.emplace(position2, unordered_map<unsigned long long int, double>()).first;
+			precomputed_ld_it->second.emplace(position2, 1.0);
 			precomputed_ld_it->second.emplace(position1, rsquare);
 		}
 
@@ -110,6 +112,8 @@ TEST_F(HVCFTestLD, LD) {
 	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
 	ASSERT_EQ(4u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
+	vector<sph_umich_edu::variants_pair> result;
+
 	start = std::chrono::system_clock::now();
 	hvcf.compute_ld("20", 11650214ul, 60759931ul);
 	end = std::chrono::system_clock::now();
@@ -118,27 +122,139 @@ TEST_F(HVCFTestLD, LD) {
 	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
 
 	start = std::chrono::system_clock::now();
-	hvcf.compute_ld("20", "20:11650214_G/A", 14403183ul, 55378791ul);
+	result = hvcf.compute_ld("20", "20:11650214_G/A", 14403183ul, 55378791ul);
 	end = std::chrono::system_clock::now();
 	elapsed_seconds = end - start;
 	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(7u, result.size());
+	for (auto&& pair : result) {
+		if (isnan(precomputed_ld.at(pair.position1).at(pair.position2))) {
+			ASSERT_TRUE(pair.rsquare);
+		} else {
+			ASSERT_NEAR(pair.rsquare, precomputed_ld.at(pair.position1).at(pair.position2), 0.00000001);
+		}
+	}
 	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
 
 	start = std::chrono::system_clock::now();
-	hvcf.compute_ld("20", "20:60759931_C/T", 14403183ul, 55378791ul);
+	result = hvcf.compute_ld("20", "20:60759931_C/T", 14403183ul, 55378791ul);
 	end = std::chrono::system_clock::now();
 	elapsed_seconds = end - start;
 	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(7u, result.size());
+	for (auto&& pair : result) {
+		if (isnan(precomputed_ld.at(pair.position1).at(pair.position2))) {
+			ASSERT_TRUE(pair.rsquare);
+		} else {
+			ASSERT_NEAR(pair.rsquare, precomputed_ld.at(pair.position1).at(pair.position2), 0.00000001);
+		}
+	}
 	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
 
 	start = std::chrono::system_clock::now();
-	hvcf.compute_ld("20", "20:46211051_A/G", 14403183ul, 55378791ul);
+	result = hvcf.compute_ld("20", "20:46211051_A/G", 14403183ul, 55378791ul);
 	end = std::chrono::system_clock::now();
 	elapsed_seconds = end - start;
 	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(6u, result.size());
+	for (auto&& pair : result) {
+		if (isnan(precomputed_ld.at(pair.position1).at(pair.position2))) {
+			ASSERT_TRUE(pair.rsquare);
+		} else {
+			ASSERT_NEAR(pair.rsquare, precomputed_ld.at(pair.position1).at(pair.position2), 0.00000001);
+		}
+	}
 	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
 
-//	cout << "precomputed ld:" << precomputed_ld.at(11650214ul).at(55378791ul) << endl;
+	start = std::chrono::system_clock::now();
+	result = hvcf.compute_ld("20", "20:46211051_A/G", 19485821ul, 19485821ul);
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(1u, result.size());
+	for (auto&& pair : result) {
+		if (isnan(precomputed_ld.at(pair.position1).at(pair.position2))) {
+			ASSERT_TRUE(pair.rsquare);
+		} else {
+			ASSERT_NEAR(pair.rsquare, precomputed_ld.at(pair.position1).at(pair.position2), 0.00000001);
+		}
+	}
+	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	result = hvcf.compute_ld("20", "20:19485821_A/G", 19485821ul, 19485821ul);
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(0u, result.size());
+	for (auto&& pair : result) {
+		if (isnan(precomputed_ld.at(pair.position1).at(pair.position2))) {
+			ASSERT_TRUE(pair.rsquare);
+		} else {
+			ASSERT_NEAR(pair.rsquare, precomputed_ld.at(pair.position1).at(pair.position2), 0.00000001);
+		}
+	}
+	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	result = hvcf.compute_ld("20", "20:46211051_A/G", 16600000ul, 50000000ul);
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(3u, result.size());
+	for (auto&& pair : result) {
+		if (isnan(precomputed_ld.at(pair.position1).at(pair.position2))) {
+			ASSERT_TRUE(pair.rsquare);
+		} else {
+			ASSERT_NEAR(pair.rsquare, precomputed_ld.at(pair.position1).at(pair.position2), 0.00000001);
+		}
+	}
+	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	result = hvcf.compute_ld("20", "20:46211051_A/G", 100ul, 16600000ul);
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(2u, result.size());
+	for (auto&& pair : result) {
+		if (isnan(precomputed_ld.at(pair.position1).at(pair.position2))) {
+			ASSERT_TRUE(pair.rsquare);
+		} else {
+			ASSERT_NEAR(pair.rsquare, precomputed_ld.at(pair.position1).at(pair.position2), 0.00000001);
+		}
+	}
+	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	result = hvcf.compute_ld("20", "20:46211051_A/G", 50000000ul, 166000000ul);
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(3u, result.size());
+	for (auto&& pair : result) {
+		if (isnan(precomputed_ld.at(pair.position1).at(pair.position2))) {
+			ASSERT_TRUE(pair.rsquare);
+		} else {
+			ASSERT_NEAR(pair.rsquare, precomputed_ld.at(pair.position1).at(pair.position2), 0.00000001);
+		}
+	}
+	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	result = hvcf.compute_ld("20", "20:46211051_A/G", 166000000ul, 166000000ul);
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(0u, result.size());
+	for (auto&& pair : result) {
+		if (isnan(precomputed_ld.at(pair.position1).at(pair.position2))) {
+			ASSERT_TRUE(pair.rsquare);
+		} else {
+			ASSERT_NEAR(pair.rsquare, precomputed_ld.at(pair.position1).at(pair.position2), 0.00000001);
+		}
+	}
+	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
 
 	hvcf.close();
 	ASSERT_EQ(0u, hvcf.get_n_opened_objects());

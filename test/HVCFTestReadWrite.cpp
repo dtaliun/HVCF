@@ -387,7 +387,7 @@ TEST_F(HVCFTestReadWrite, VariantLookupByName) {
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTestReadWrite, LargeFileTest) {
+TEST_F(HVCFTestReadWrite, DISABLED_LargeFileTest) {
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	std::chrono::duration<double> elapsed_seconds;
 	sph_umich_edu::HVCF hvcf;

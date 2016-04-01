@@ -1758,59 +1758,6 @@ long long int HVCF::get_variant_offset_by_name(const string& chromosome, const s
 	return offset;
 }
 
-void HVCF::chunk_read_test(const string& chromosome, unsigned long long int start_position, unsigned long long end_position) throw (HVCFReadException) {
-	auto chromosome_it = chromosomes.find(chromosome); //TODO: check if chromosome exists
-
-	long long int start_position_offset = get_variant_offset_by_position_eq(chromosome, start_position); // TODO: put 0 if not exists
-	long long int end_position_offset = get_variant_offset_by_position_eq(chromosome, end_position); // TODO: put file_dims[0] - 1 offset if not exists
-
-//	cout << lead_variant_offset << " " << start_position_offset << " " << end_position_offset << endl;
-
-	HDF5DatasetIdentifier dataset_id;
-	HDF5DataspaceIdentifier file_dataspace_id;
-	HDF5DataspaceIdentifier memory_dataspace_id;
-
-	hsize_t n_samples = get_n_samples(); // TODO: compute this only once on file opening
-	hsize_t n_haplotypes = n_samples + n_samples; // TODO: compute this only once on file opening
-	long long int n_variants = end_position_offset - start_position_offset + 1;
-
-//	cout << n_variants << " " << n_haplotypes << endl;
-
-	hsize_t file_offset[2]{start_position_offset, 0};
-	hsize_t mem_dims[2]{n_variants, n_haplotypes};
-
-	unique_ptr<unsigned char[]> haplotypes = unique_ptr<unsigned char[]>(new unsigned char[n_variants * n_haplotypes]);
-
-	if ((dataset_id = H5Dopen(chromosome_it->second->get(), HAPLOTYPES_DATASET, H5P_DEFAULT)) < 0) {
-		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while opening dataset.");
-	}
-
-	if ((file_dataspace_id = H5Dget_space(dataset_id)) < 0) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while getting dataspace.");
-	}
-
-	if ((memory_dataspace_id = H5Screate_simple(2, mem_dims, nullptr)) < 0) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating memory dataspace.");
-	}
-
-	if (H5Sselect_hyperslab(file_dataspace_id, H5S_SELECT_SET, file_offset, NULL, mem_dims, NULL) < 0) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while making selection in dataspace.");
-	}
-
-	if (H5Dread(dataset_id, H5T_NATIVE_UCHAR, memory_dataspace_id, file_dataspace_id, H5P_DEFAULT, haplotypes.get()) < 0) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while reading from dataset");
-	}
-
-//	for (long long int i = 0; i < n_variants; ++i) {
-//		cout << (start_position_offset + i) << "=";
-//		for (hsize_t j = 0; j < n_haplotypes; ++j) {
-//			cout << ((int)haplotypes[i * n_haplotypes + j]);
-//		}
-//		cout << endl;
-//	}
-
-}
-
 void HVCF::compute_ld(const string& chromosome, unsigned long long int start_position, unsigned long long end_position) throw (HVCFReadException) {
 	auto chromosome_it = chromosomes.find(chromosome); //TODO: check if chromosome exists
 
@@ -1908,19 +1855,41 @@ void HVCF::compute_ld(const string& chromosome, unsigned long long int start_pos
 
 }
 
-void HVCF::compute_ld(const string& chromosome, const string& lead_variant_name, unsigned long long int start_position, unsigned long long end_position) throw (HVCFReadException) {
-	auto chromosome_it = chromosomes.find(chromosome); //TODO: check if chromosome exists
+vector<variants_pair> HVCF::compute_ld(const string& chromosome, const string& lead_variant_name, unsigned long long int start_position, unsigned long long end_position) throw (HVCFReadException) {
+	vector<variants_pair> result;
 
-	long long int lead_variant_offset = get_variant_offset_by_name(chromosome, lead_variant_name); // TODO: check if exists
-	long long int start_position_offset = get_variant_offset_by_position_eq(chromosome, start_position); // TODO: put 0 if not exists
-	long long int end_position_offset = get_variant_offset_by_position_eq(chromosome, end_position); // TODO: put file_dims[0] - 1 offset if not exists
+	auto chromosome_it = chromosomes.find(chromosome);
+
+	if (chromosome_it == chromosomes.end()) {
+		return result;
+	}
+
+	if (end_position < start_position) {
+		return result;
+	}
+
+	long long int lead_variant_offset = 0;
+	long long int start_position_offset = 0;
+	long long int end_position_offset = 0;
+
+	if ((lead_variant_offset = get_variant_offset_by_name(chromosome, lead_variant_name)) < 0) {
+		return result;
+	}
+
+	if ((start_position_offset = get_variant_offset_by_position_ge(chromosome, start_position)) < 0) {
+		return result;
+	}
+
+	if ((end_position_offset = get_variant_offset_by_position_le(chromosome, end_position)) < 0) {
+		return result;
+	}
 
 	HDF5DatasetIdentifier dataset_id;
 	HDF5DataspaceIdentifier file_dataspace_id;
 	HDF5DataspaceIdentifier memory_dataspace_id;
 
-	hsize_t n_samples = get_n_samples(); // TODO: compute this only once on file opening
-	hsize_t n_haplotypes = n_samples + n_samples; // TODO: compute this only once on file opening
+	hsize_t n_samples = get_n_samples();
+	hsize_t n_haplotypes = 2 * n_samples;
 
 	hsize_t n_variants = 0;
 	hsize_t lead_variant_local_offset = 0;
@@ -1937,13 +1906,158 @@ void HVCF::compute_ld(const string& chromosome, const string& lead_variant_name,
 		}
 	}
 
+	hsize_t file_offset1_2D[2]{static_cast<hsize_t>(lead_variant_offset), 0};
+	hsize_t counts1_2D[2]{1, n_haplotypes};
+	hsize_t file_offset2_2D[2]{static_cast<hsize_t>(start_position_offset), 0};
+	hsize_t counts2_2D[2]{static_cast<hsize_t>(end_position_offset - start_position_offset + 1), n_haplotypes};
+	hsize_t mem_dims_2D[2]{n_variants, n_haplotypes};
+
+	unique_ptr<unsigned char[]> haplotypes = unique_ptr<unsigned char[]>(new unsigned char[n_variants * n_haplotypes]); // why smart pointer???
+
+	if ((dataset_id = H5Dopen(chromosome_it->second->get(), HAPLOTYPES_DATASET, H5P_DEFAULT)) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while opening dataset.");
+	}
+
+	if ((file_dataspace_id = H5Dget_space(dataset_id)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while getting dataspace.");
+	}
+
+	if ((memory_dataspace_id = H5Screate_simple(2, mem_dims_2D, nullptr)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating memory dataspace.");
+	}
+
+	if (H5Sselect_hyperslab(file_dataspace_id, H5S_SELECT_SET, file_offset1_2D, NULL, counts1_2D, NULL) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while making selection in dataspace.");
+	}
+
+	if (H5Sselect_hyperslab(file_dataspace_id, H5S_SELECT_OR, file_offset2_2D, NULL, counts2_2D, NULL) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while making selection in dataspace.");
+	}
+
+	if (H5Dread(dataset_id, H5T_NATIVE_UCHAR, memory_dataspace_id, file_dataspace_id, H5P_DEFAULT, haplotypes.get()) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while reading from dataset");
+	}
+
+	dataset_id.close();
+	file_dataspace_id.close();
+	memory_dataspace_id.close();
+
+	unique_ptr<double[]> dbl_haplotypes = unique_ptr<double[]>(new double[n_variants * n_haplotypes]);
+	for (unsigned long long int i = 0u; i < n_variants * n_haplotypes; ++i) {
+		dbl_haplotypes[i] = (double)haplotypes[i];
+	}
+
+	Mat<double> S(dbl_haplotypes.get(), n_haplotypes, n_variants, false, false); // this call doesn't copy matrix.
+	Row<double> L(S.colptr(lead_variant_local_offset), n_haplotypes);
+	Row<double> J(n_haplotypes, fill::ones);
+
+	Mat<double> LC1(J * L.t());
+	Mat<double> LC2(n_haplotypes - LC1);
+	Mat<double> SC1(J * S);
+	Mat<double> SC2(n_haplotypes - SC1);
+	Mat<double> M1(LC1 * SC1);
+
+	Mat<double> R((n_haplotypes * L * S - M1) / sqrt(M1 % (LC2 * SC2)));
+
+//	cout << "R:" << endl;
+//	R.raw_print();
+
+//	cout << "Rsq:" << endl;
+//	cout << square(R) << endl;
+
+	HDF5DatatypeIdentifier variants_entry_memory_datatype_id;
+
+	hsize_t file_offset1_1D[1]{static_cast<hsize_t>(lead_variant_offset)};
+	hsize_t counts1_1D[1]{1};
+	hsize_t file_offset2_1D[1]{static_cast<hsize_t>(start_position_offset)};
+	hsize_t counts2_1D[1]{static_cast<hsize_t>(end_position_offset - start_position_offset + 1)};
+	hsize_t mem_dims_1D[1]{n_variants};
+
+	variants_entry_type variants_buffer[n_variants];
+
+	try {
+		variants_entry_memory_datatype_id = create_variants_entry_memory_datatype();
+	} catch (HVCFCreateException &e) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating memory datatypes.");
+	}
+
+	if ((dataset_id = H5Dopen(chromosome_it->second->get(), VARIANTS_DATASET, H5P_DEFAULT)) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while opening dataset.");
+	}
+
+	if ((file_dataspace_id = H5Dget_space(dataset_id)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while getting dataspace.");
+	}
+
+	if ((memory_dataspace_id = H5Screate_simple(1, mem_dims_1D, nullptr)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating memory dataspace.");
+	}
+
+	if (H5Sselect_hyperslab(file_dataspace_id, H5S_SELECT_SET, file_offset1_1D, NULL, counts1_1D, NULL) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while making selection in dataspace.");
+	}
+
+	if (H5Sselect_hyperslab(file_dataspace_id, H5S_SELECT_OR, file_offset2_1D, NULL, counts2_1D, NULL) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while making selection in dataspace.");
+	}
+
+	if (H5Dread(dataset_id, variants_entry_memory_datatype_id, memory_dataspace_id, file_dataspace_id, H5P_DEFAULT, variants_buffer) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while reading from dataset");
+	}
+
+	for (unsigned int i = 0; i < lead_variant_local_offset; ++i) {
+		result.emplace_back(
+				variants_buffer[lead_variant_local_offset].name, variants_buffer[lead_variant_local_offset].position,
+				variants_buffer[i].name, variants_buffer[i].position,
+				R(0, i), pow(R(0, i), 2.0));
+	}
+
+	for (unsigned int i = lead_variant_local_offset + 1; i < n_variants; ++i) {
+		result.emplace_back(
+				variants_buffer[lead_variant_local_offset].name, variants_buffer[lead_variant_local_offset].position,
+				variants_buffer[i].name, variants_buffer[i].position,
+				R(0, i), pow(R(0, i), 2.0));
+	}
+
+	if (H5Dvlen_reclaim(variants_entry_memory_datatype_id, memory_dataspace_id, H5P_DEFAULT, variants_buffer) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while reclaiming HDF5 memory.");
+	}
+
+	return result;
+}
+
+unsigned int HVCF::get_n_opened_objects() const {
+	if (file_id >= 0) {
+		return H5Fget_obj_count(file_id, H5F_OBJ_ALL);
+	}
+	return 0u;
+}
+
+unsigned int HVCF::get_n_all_opened_objects() {
+	return H5Fget_obj_count(H5F_OBJ_ALL, H5F_OBJ_ALL);
+}
+
+
+
+void HVCF::chunk_read_test(const string& chromosome, unsigned long long int start_position, unsigned long long end_position) throw (HVCFReadException) {
+	auto chromosome_it = chromosomes.find(chromosome); //TODO: check if chromosome exists
+
+	long long int start_position_offset = get_variant_offset_by_position_eq(chromosome, start_position); // TODO: put 0 if not exists
+	long long int end_position_offset = get_variant_offset_by_position_eq(chromosome, end_position); // TODO: put file_dims[0] - 1 offset if not exists
+
 //	cout << lead_variant_offset << " " << start_position_offset << " " << end_position_offset << endl;
+
+	HDF5DatasetIdentifier dataset_id;
+	HDF5DataspaceIdentifier file_dataspace_id;
+	HDF5DataspaceIdentifier memory_dataspace_id;
+
+	hsize_t n_samples = get_n_samples(); // TODO: compute this only once on file opening
+	hsize_t n_haplotypes = n_samples + n_samples; // TODO: compute this only once on file opening
+	long long int n_variants = end_position_offset - start_position_offset + 1;
+
 //	cout << n_variants << " " << n_haplotypes << endl;
 
-	hsize_t file_offset1[2]{lead_variant_offset, 0};
-	hsize_t counts1[2]{1, n_haplotypes};
-	hsize_t file_offset2[2]{start_position_offset, 0};
-	hsize_t counts2[2]{end_position_offset - start_position_offset + 1, n_haplotypes};
+	hsize_t file_offset[2]{start_position_offset, 0};
 	hsize_t mem_dims[2]{n_variants, n_haplotypes};
 
 	unique_ptr<unsigned char[]> haplotypes = unique_ptr<unsigned char[]>(new unsigned char[n_variants * n_haplotypes]);
@@ -1960,11 +2074,7 @@ void HVCF::compute_ld(const string& chromosome, const string& lead_variant_name,
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating memory dataspace.");
 	}
 
-	if (H5Sselect_hyperslab(file_dataspace_id, H5S_SELECT_SET, file_offset1, NULL, counts1, NULL) < 0) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while making selection in dataspace.");
-	}
-
-	if (H5Sselect_hyperslab(file_dataspace_id, H5S_SELECT_OR, file_offset2, NULL, counts2, NULL) < 0) {
+	if (H5Sselect_hyperslab(file_dataspace_id, H5S_SELECT_SET, file_offset, NULL, mem_dims, NULL) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while making selection in dataspace.");
 	}
 
@@ -1972,50 +2082,14 @@ void HVCF::compute_ld(const string& chromosome, const string& lead_variant_name,
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while reading from dataset");
 	}
 
-	unique_ptr<double[]> dbl_haplotypes = unique_ptr<double[]>(new double[n_variants * n_haplotypes]);
-	for (long long int i = 0; i < n_variants * n_haplotypes; ++i) {
-		dbl_haplotypes[i] = (double)haplotypes[i];
-	}
+//	for (long long int i = 0; i < n_variants; ++i) {
+//		cout << (start_position_offset + i) << "=";
+//		for (hsize_t j = 0; j < n_haplotypes; ++j) {
+//			cout << ((int)haplotypes[i * n_haplotypes + j]);
+//		}
+//		cout << endl;
+//	}
 
-	Mat<double> S(dbl_haplotypes.get(), n_haplotypes, n_variants, false, false); // don't copy matrix.
-	Row<double> L(S.colptr(lead_variant_local_offset), n_haplotypes);
-	Row<double> J(n_haplotypes, fill::ones);
-
-//  also correct
-//	Mat<double> C1(J * S);
-//	Mat<double> C2(n_haplotypes - C1);
-//	double l1 = C1(0, lead_variant_local_offset);
-//	double l2 = n_haplotypes - l1;
-//	Mat<double> M1(l1 * C1);
-//
-//	Mat<double> R((n_haplotypes * L * S - M1) / sqrt(M1 % (l2 * C2)));
-
-	Mat<double> LC1(J * L.t());
-	Mat<double> LC2(n_haplotypes - LC1);
-	Mat<double> SC1(J * S);
-	Mat<double> SC2(n_haplotypes - SC1);
-	Mat<double> M1(LC1 * SC1);
-
-	Mat<double> R((n_haplotypes * L * S - M1) / sqrt(M1 % (LC2 * SC2)));
-
-//	cout << "R:" << endl;
-//	R.raw_print();
-
-//	cout << "Rsq:" << endl;
-//	cout << square(R) << endl;
 }
-
-unsigned int HVCF::get_n_opened_objects() const {
-	if (file_id >= 0) {
-		return H5Fget_obj_count(file_id, H5F_OBJ_ALL);
-	}
-	return 0u;
-}
-
-unsigned int HVCF::get_n_all_opened_objects() {
-	return H5Fget_obj_count(H5F_OBJ_ALL, H5F_OBJ_ALL);
-}
-
-
 
 }
