@@ -1,5 +1,5 @@
-GTESTLIB = /Users/dtaliun/Documents/gtest/googletest/cmake/test/
-GTESTINCS = /Users/dtaliun/Documents/gtest/googletest/include/
+GTESTLIB=/Users/dtaliun/Documents/gtest/googletest/googletest/build/
+GTESTINCS=/Users/dtaliun/Documents/gtest/googletest/googletest/include/
 HDF5LIB=/Users/dtaliun/Documents/hdf5-1.10.0/hdf5/lib
 HDF5INCS=/Users/dtaliun/Documents/hdf5-1.10.0/hdf5/include
 BLOSCLIB=/Users/dtaliun/Documents/c-blosc-1.7.1/blosc
@@ -17,7 +17,8 @@ BLOSCLIBS = ../src/blosc/*.o
 BLOSCDIRS = ../src/blosc
 
 CXX = g++
-CXXFLAGS = -std=c++11 -Wall -L/opt/local/lib/ -lz -L$(GTESTLIB) -L$(HDF5LIB) -L$(BLOSCLIB) -lhdf5 -lblosc -lgtest -larmadillo
+CXXFLAGS = -std=c++11 -Wall -L/opt/local/lib/ -L$(GTESTLIB) -L$(HDF5LIB) -L$(BLOSCLIB)
+LIBS = -lz -lhdf5 -lblosc -larmadillo -lgtest
 INCS = -I$(GTESTINCS) -I$(HDF5INCS) -I$(BLOSCINCS)
 
 OBJECTS = HVCFTestReadWrite.o HVCFTestLD.o Main_TestAll.o
@@ -42,7 +43,7 @@ applibs:
 	done
 
 testAll: $(OBJECTS)
-	$(CXX) $(CXXFLAGS) $(INCS) -o $@ $(OBJECTS) $(BLOSCLIBS) $(AUXLIBS) $(APPLIBS)
+	$(CXX) $(CXXFLAGS) $(INCS) -o $@ $(OBJECTS) $(BLOSCLIBS) $(AUXLIBS) $(APPLIBS) $(LIBS)
 	
 .cpp.o:
 	$(CXX) $(CXXFLAGS) $(INCS) -c -o $@ $<
