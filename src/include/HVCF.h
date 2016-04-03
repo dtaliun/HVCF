@@ -56,15 +56,18 @@ private:
 	static constexpr char VARIANTS_ENTRY_TYPE[] = "variants_entry_type";
 	static constexpr char STRING_INDEX_KEY_TYPE[] = "string_index_key_type";
 	static constexpr char INTERVAL_INDEX_KEY_TYPE[] = "interval_index_key_type";
+	static constexpr char HASH_INDEX_KEY_TYPE[] = "hash_index_key_type";
 	static constexpr char ULL_INDEX_KEY_TYPE[] = "ull_index_key_type";
 	static constexpr char VARIANT_NAMES_INDEX_GROUP[] = "names_index";
 	static constexpr char VARIANT_INTERVALS_INDEX_GROUP[] = "intervals_index";
 	static constexpr char VARIANT_INTERVALS_INDEX[] = "intervals";
+	static constexpr char VARIANT_HASH_INDEX[] = "hashes";
 
 	hid_t create_variants_entry_memory_datatype() throw (HVCFCreateException);
 	hid_t create_ull_index_key_memory_datatype() throw (HVCFCreateException);
 	hid_t create_string_index_key_memory_datatype() throw (HVCFCreateException);
 	hid_t create_interval_index_key_memory_datatype() throw (HVCFCreateException);
+	hid_t create_hash_index_key_memory_datatype() throw (HVCFCreateException);
 
 	hid_t create_strings_1D_dataset(const string& name, hid_t group_id, hsize_t chunk_size) throw (HVCFWriteException);
 	hid_t create_hsize_1D_dataset(const string& name, hid_t group_id, hsize_t chunk_size) throw (HVCFWriteException);
@@ -72,12 +75,18 @@ private:
 	hid_t create_variants_dataset(hid_t group_id, hsize_t chunk_size) throw (HVCFWriteException);
 	hid_t create_chromosome_group(const string& name) throw (HVCFWriteException);
 
+	void initialize(hid_t chromosome_group_id) throw (HVCFWriteException);
+	void initialize2(hid_t chromosome_group_id) throw (HVCFWriteException);
+
 	void write_haplotypes(hid_t group_id, const unsigned char* buffer, unsigned int n_variants, unsigned int n_haplotypes) throw (HVCFWriteException);
 	void write_variants(hid_t group_id, const variants_entry_type* buffer, unsigned int n_variants) throw (HVCFWriteException);
 
-	void write_interval_index_bucket(hid_t chromosome_group_id, const vector<hsize_t>& offsets, interval_index_key_type& inetrval_index_key) throw (HVCFWriteException);
+	void write_interval_index_bucket(hid_t chromosome_group_id, const vector<hsize_t>& offsets, interval_index_key_type& interval_index_key) throw (HVCFWriteException);
+	void write_interval_index_bucket2(hid_t chromosome_group_id, const vector<hsize_t>& offsets, interval_index_key_type& interval_index_key) throw (HVCFWriteException);
 	void write_intervals_index(hid_t chromosome_group_id, const interval_index_key_type* interval_index_keys, unsigned int n_interval_index_keys) throw (HVCFWriteException);
-	void write_names_index_bucket(hid_t chromosome_group_id, const string& hash, const vector<hsize_t>& offsets) throw (HVCFWriteException);
+	void write_names_index_bucket(hid_t chromosome_group_id, const vector<hsize_t>& offsets, hash_index_key_type& hash_index_key) throw (HVCFWriteException);
+	void write_hash_index(hid_t chromosome_group_id, const hash_index_key_type* hash_index_keys, unsigned int n_hash_index_keys) throw (HVCFWriteException);
+
 	void create_indices(hid_t chromosome_group_id) throw (HVCFWriteException);
 
 	unordered_map<string, unique_ptr<HDF5GroupIdentifier>> chromosomes;
