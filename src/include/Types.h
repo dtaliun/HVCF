@@ -15,30 +15,22 @@ typedef struct {
 	hsize_t offset_2;
 	hsize_t bucket_offset;
 	hsize_t bucket_size;
-} interval_index_key_type;
-
-//typedef struct {
-//	unsigned long long int ull_value_1;
-//	unsigned long long int ull_value_2;
-//	hsize_t offset_1;
-//	hsize_t offset_2;
-//	hobj_ref_t obj_reference;
-//} interval_index_key_type;
+} interval_index_entry_type;
 
 typedef struct {
 	hsize_t bucket_offset;
 	hsize_t bucket_size;
-} hash_index_key_type;
+} hash_index_entry_type;
 
 typedef struct {
 	char* string_value;
 	hsize_t offset;
-} string_index_key_type;
+} string_index_entry_type;
 
 typedef struct {
 	unsigned long long int ull_value;
 	hsize_t offset;
-} ull_index_key_type;
+} ull_index_entry_type;
 
 typedef struct {
 	char* name;
