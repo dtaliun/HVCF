@@ -20,22 +20,29 @@ constexpr char HVCF::VARIANT_HASH_INDEX[];
 constexpr char HVCF::INDEX_BUCKETS[];
 
 
-HVCF::HVCF() {
+HVCF::HVCF() : HVCF(HVCFConfiguration()) {
+
+}
+
+HVCF::HVCF(const HVCFConfiguration& configuration) {
 //	Disables automatic HDF5 error stack printing to stderr when function call returns negative value.
 //	H5Eset_auto(H5E_DEFAULT, nullptr, nullptr);
 
-//  Register Blosc
-//	char* blosc_version = nullptr;
-//	char* blosc_date = nullptr;
-//	int status = 0;
-//
-//	status = register_blosc(&blosc_version, &blosc_date);
-//	if (status >= 0) {
-//		cout << "Blosc registered: " << blosc_version << " " << blosc_date << endl;
-//	} else {
-//		cout << "Blosc was not registered" << endl;
-//	}
+	N_HASH_BUCKETS = configuration.n_hash_buckets;
+	MAX_VARIANTS_IN_INTERVAL_BUCKET = configuration.max_variants_in_interval_bucket;
+	VARIANTS_CHUNK_SIZE = configuration.variants_chunk_size;
+	SAMPLES_CHUNK_SIZE = configuration.samples_chunk_size;
+	COMPRESSION = configuration.compression;
+	COMPRESSION_LEVEL = configuration.compression_level;
 
+//  Register Blosc
+	if (strcmp(COMPRESSION, HVCFConfiguration::BLOSC_LZ4HC_COMPRESSION) == 0) {
+		char* blosc_version = nullptr;
+		char* blosc_date = nullptr;
+		if (register_blosc(&blosc_version, &blosc_date) < 0) {
+			// throw some expression
+		}
+	}
 }
 
 HVCF::~HVCF() {
@@ -254,8 +261,24 @@ void HVCF::initialize_ull_index_buckets(hid_t chromosome_group_id, const char* i
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataset property.");
 	}
 
-	if ((H5Pset_chunk(dataset_property_id, 1, chunk_dims) < 0) || (H5Pset_deflate(dataset_property_id, 9) < 0)) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
+	if (strcmp(COMPRESSION, HVCFConfiguration::GZIP_COMPRESSION) == 0) {
+		if ((H5Pset_chunk(dataset_property_id, 1, chunk_dims) < 0) || (H5Pset_deflate(dataset_property_id, COMPRESSION_LEVEL) < 0)) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
+		}
+	} else if (strcmp(COMPRESSION, HVCFConfiguration::BLOSC_LZ4HC_COMPRESSION) == 0) {
+		unsigned int cd_values[7];
+		cd_values[4] = COMPRESSION_LEVEL;
+		// 0 -- shuffle not active, 1 -- shuffle active
+		cd_values[5] = 1;
+		// Compressor to use
+		cd_values[6] = BLOSC_LZ4HC; // does better but slower compression. decompression is still very fast.
+		if ((H5Pset_chunk(dataset_property_id, 1, chunk_dims) < 0) || (H5Pset_filter(dataset_property_id, FILTER_BLOSC, H5Z_FLAG_OPTIONAL, 7, cd_values) < 0)) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
+		}
+	} else {
+		if (H5Pset_chunk(dataset_property_id, 1, chunk_dims) < 0) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
+		}
 	}
 
 	if ((dataset_id = H5Dcreate(index_group_id, INDEX_BUCKETS, index_entry_type_id, dataspace_id, H5P_DEFAULT, dataset_property_id, H5P_DEFAULT)) < 0) {
@@ -278,7 +301,7 @@ void HVCF::initialize_string_index_buckets(hid_t chromosome_group_id, const char
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while opening datatype.");
 	}
 
-		if ((index_group_id = H5Gopen(chromosome_group_id, index_group_name, H5P_DEFAULT)) < 0) {
+	if ((index_group_id = H5Gopen(chromosome_group_id, index_group_name, H5P_DEFAULT)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while opening group.");
 	}
 
@@ -290,8 +313,24 @@ void HVCF::initialize_string_index_buckets(hid_t chromosome_group_id, const char
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataset property.");
 	}
 
-	if ((H5Pset_chunk(dataset_property_id, 1, chunk_dims) < 0) || (H5Pset_deflate(dataset_property_id, 9) < 0)) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
+	if (strcmp(COMPRESSION, HVCFConfiguration::GZIP_COMPRESSION) == 0) {
+		if ((H5Pset_chunk(dataset_property_id, 1, chunk_dims) < 0) || (H5Pset_deflate(dataset_property_id, COMPRESSION_LEVEL) < 0)) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
+		}
+	} else if (strcmp(COMPRESSION, HVCFConfiguration::BLOSC_LZ4HC_COMPRESSION) == 0) {
+		unsigned int cd_values[7];
+		cd_values[4] = COMPRESSION_LEVEL;
+		// 0 -- shuffle not active, 1 -- shuffle active
+		cd_values[5] = 1;
+		// Compressor to use
+		cd_values[6] = BLOSC_LZ4HC; // does better but slower compression. decompression is still very fast.
+		if ((H5Pset_chunk(dataset_property_id, 1, chunk_dims) < 0) || (H5Pset_filter(dataset_property_id, FILTER_BLOSC, H5Z_FLAG_OPTIONAL, 7, cd_values) < 0)) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
+		}
+	} else {
+		if (H5Pset_chunk(dataset_property_id, 1, chunk_dims) < 0) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
+		}
 	}
 
 	if ((dataset_id = H5Dcreate(index_group_id, INDEX_BUCKETS, index_entry_type_id, dataspace_id, H5P_DEFAULT, dataset_property_id, H5P_DEFAULT)) < 0) {
@@ -305,15 +344,16 @@ hid_t HVCF::create_haplotypes_dataset(hid_t group_id, hsize_t variants_chunk_siz
 	HDF5PropertyIdentifier dataset_property_id;
 
 	hsize_t n_samples = get_n_samples();
-	hsize_t n_haplotypes = n_samples + n_samples;
+	hsize_t n_haplotypes = 2 * n_samples;
+	hsize_t haplotypes_chunk_size = 2 * samples_chunk_size;
 
-	if (samples_chunk_size > n_haplotypes) {
-		samples_chunk_size = n_haplotypes;
+	if (haplotypes_chunk_size > n_haplotypes) {
+		haplotypes_chunk_size = n_haplotypes;
 	}
 
 	hsize_t initial_dims[2]{0, n_haplotypes};
 	hsize_t maximum_dims[2]{H5S_UNLIMITED, n_haplotypes};
-	hsize_t chunk_dims[2]{variants_chunk_size, samples_chunk_size};
+	hsize_t chunk_dims[2]{variants_chunk_size, haplotypes_chunk_size};
 
 	if ((dataspace_id = H5Screate_simple(2, initial_dims, maximum_dims)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataspace.");
@@ -323,28 +363,25 @@ hid_t HVCF::create_haplotypes_dataset(hid_t group_id, hsize_t variants_chunk_siz
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataset property.");
 	}
 
-//	GZIP compression
-	if ((H5Pset_chunk(dataset_property_id, 2, chunk_dims) < 0) || (H5Pset_deflate(dataset_property_id, 9) < 0)) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
+	if (strcmp(COMPRESSION, HVCFConfiguration::GZIP_COMPRESSION) == 0) {
+		if ((H5Pset_chunk(dataset_property_id, 2, chunk_dims) < 0) || (H5Pset_deflate(dataset_property_id, COMPRESSION_LEVEL) < 0)) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
+		}
+	} else if (strcmp(COMPRESSION, HVCFConfiguration::BLOSC_LZ4HC_COMPRESSION) == 0) {
+		unsigned int cd_values[7];
+		cd_values[4] = COMPRESSION_LEVEL;
+		// 0 -- shuffle not active, 1 -- shuffle active
+		cd_values[5] = 1;
+		// Compressor to use
+		cd_values[6] = BLOSC_LZ4HC; // does better but slower compression. decompression is still very fast.
+		if ((H5Pset_chunk(dataset_property_id, 2, chunk_dims) < 0) || (H5Pset_filter(dataset_property_id, FILTER_BLOSC, H5Z_FLAG_OPTIONAL, 7, cd_values) < 0)) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
+		}
+	} else {
+		if (H5Pset_chunk(dataset_property_id, 2, chunk_dims) < 0) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
+		}
 	}
-
-//	Trying blosc compression
-//	unsigned int cd_values[7];
-//	// compression level
-//	cd_values[4] = 9;
-//	// 0 -- shuffle not active, 1 -- shuffle active
-//	cd_values[5] = 1;
-//	// Compressor to use
-//	cd_values[6] = BLOSC_LZ4HC; // does better but slower compression. decompression is still very fast.
-//
-//	if ((H5Pset_chunk(dataset_property_id, 2, chunk_dims) < 0) || (H5Pset_filter(dataset_property_id, FILTER_BLOSC, H5Z_FLAG_OPTIONAL, 7, cd_values) < 0)) {
-//		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
-//	}
-
-// 	Trying SZIP compression
-//	if ((H5Pset_chunk(dataset_property_id, 2, chunk_dims) < 0) || (H5Pset_szip(dataset_property_id, H5_SZIP_NN_OPTION_MASK, 32) < 0)) {
-//		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
-//	}
 
 	if ((dataset_id = H5Dcreate(group_id, HAPLOTYPES_DATASET, H5T_NATIVE_UCHAR, dataspace_id, H5P_DEFAULT, dataset_property_id, H5P_DEFAULT)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataset.");
@@ -375,23 +412,25 @@ hid_t HVCF::create_variants_dataset(hid_t group_id, hsize_t chunk_size) throw (H
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataset property.");
 	}
 
-//	GZIP compression
-	if ((H5Pset_chunk(dataset_property_id, 1, chunk_dims) < 0) || (H5Pset_deflate(dataset_property_id, 9) < 0)) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
+	if (strcmp(COMPRESSION, HVCFConfiguration::GZIP_COMPRESSION) == 0) {
+		if ((H5Pset_chunk(dataset_property_id, 1, chunk_dims) < 0) || (H5Pset_deflate(dataset_property_id, COMPRESSION_LEVEL) < 0)) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
+		}
+	} else if (strcmp(COMPRESSION, HVCFConfiguration::BLOSC_LZ4HC_COMPRESSION) == 0) {
+		unsigned int cd_values[7];
+		cd_values[4] = COMPRESSION_LEVEL;
+		// 0 -- shuffle not active, 1 -- shuffle active
+		cd_values[5] = 1;
+		// Compressor to use
+		cd_values[6] = BLOSC_LZ4HC; // does better but slower compression. decompression is still very fast.
+		if ((H5Pset_chunk(dataset_property_id, 1, chunk_dims) < 0) || (H5Pset_filter(dataset_property_id, FILTER_BLOSC, H5Z_FLAG_OPTIONAL, 7, cd_values) < 0)) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
+		}
+	} else {
+		if (H5Pset_chunk(dataset_property_id, 1, chunk_dims) < 0) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
+		}
 	}
-
-//	Trying blosc compression
-//	unsigned int cd_values[7];
-//	// compression level
-//	cd_values[4] = 9;
-//	// 0 -- shuffle not active, 1 -- shuffle active
-//	cd_values[5] = 1;
-//	// Compressor to use
-//	cd_values[6] = BLOSC_LZ4HC; // does better but slower compression. decompression is still very fast.
-//
-//	if ((H5Pset_chunk(dataset_property_id, 1, chunk_dims) < 0) || (H5Pset_filter(dataset_property_id, FILTER_BLOSC, H5Z_FLAG_OPTIONAL, 7, cd_values) < 0)) {
-//		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
-//	}
 
 	if ((dataset_id = H5Dcreate(group_id, VARIANTS_DATASET, datatype_id, dataspace_id, H5P_DEFAULT, dataset_property_id, H5P_DEFAULT)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataset.");
@@ -412,10 +451,10 @@ hid_t HVCF::create_chromosome_group(const string& name) throw (HVCFWriteExceptio
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating group.");
 	}
 
-	dataset_id = create_haplotypes_dataset(group_id, 2000, 4000);
+	dataset_id = create_haplotypes_dataset(group_id, VARIANTS_CHUNK_SIZE, SAMPLES_CHUNK_SIZE);
 	dataset_id.close();
 
-	dataset_id = create_variants_dataset(group_id, 2000);
+	dataset_id = create_variants_dataset(group_id, VARIANTS_CHUNK_SIZE);
 	dataset_id.close();
 
 	return group_id.release();
@@ -667,6 +706,11 @@ void HVCF::write_intervals_index(hid_t chromosome_group_id, const interval_index
 	HDF5PropertyIdentifier dataset_property_id;
 
 	hsize_t dims[1]{n_interval_index_entries};
+	hsize_t chunk_dims[1]{100};
+
+	if (dims[0] < chunk_dims[0]) {
+		chunk_dims[0] = dims[0];
+	}
 
 	// BEGIN: open comitted datatype.
 	if ((interval_index_entry_type_id = H5Topen(file_id, INTERVAL_INDEX_ENTRY_TYPE, H5P_DEFAULT)) < 0) {
@@ -692,6 +736,26 @@ void HVCF::write_intervals_index(hid_t chromosome_group_id, const interval_index
 
 	if ((dataset_property_id = H5Pcreate(H5P_DATASET_CREATE)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataset property.");
+	}
+
+	if (strcmp(COMPRESSION, HVCFConfiguration::GZIP_COMPRESSION) == 0) {
+		if ((H5Pset_chunk(dataset_property_id, 1, chunk_dims) < 0) || (H5Pset_deflate(dataset_property_id, COMPRESSION_LEVEL) < 0)) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
+		}
+	} else if (strcmp(COMPRESSION, HVCFConfiguration::BLOSC_LZ4HC_COMPRESSION) == 0) {
+		unsigned int cd_values[7];
+		cd_values[4] = COMPRESSION_LEVEL;
+		// 0 -- shuffle not active, 1 -- shuffle active
+		cd_values[5] = 1;
+		// Compressor to use
+		cd_values[6] = BLOSC_LZ4HC; // does better but slower compression. decompression is still very fast.
+		if ((H5Pset_chunk(dataset_property_id, 1, chunk_dims) < 0) || (H5Pset_filter(dataset_property_id, FILTER_BLOSC, H5Z_FLAG_OPTIONAL, 7, cd_values) < 0)) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
+		}
+	} else {
+		if (H5Pset_chunk(dataset_property_id, 1, chunk_dims) < 0) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
+		}
 	}
 
 	if ((dataset_id = H5Dcreate(index_group_id, VARIANT_INTERVALS_INDEX, interval_index_entry_type_id, file_dataspace_id, H5P_DEFAULT, dataset_property_id, H5P_DEFAULT)) < 0) {
@@ -841,6 +905,10 @@ void HVCF::write_names_index(hid_t chromosome_group_id, const hash_index_entry_t
 	hsize_t dims[1]{n_hash_index_entries};
 	hsize_t chunk_dims[1]{100};
 
+	if (dims[0] < chunk_dims[0]) {
+		chunk_dims[0] = dims[0];
+	}
+
 	// BEGIN: open comitted datatype.
 	if ((hash_index_entry_type_id = H5Topen(file_id, HASH_INDEX_ENTRY_TYPE, H5P_DEFAULT)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while opening datatype.");
@@ -867,8 +935,24 @@ void HVCF::write_names_index(hid_t chromosome_group_id, const hash_index_entry_t
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataset property.");
 	}
 
-	if ((H5Pset_chunk(dataset_property_id, 1, chunk_dims) < 0) || (H5Pset_deflate(dataset_property_id, 9) < 0)) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
+	if (strcmp(COMPRESSION, HVCFConfiguration::GZIP_COMPRESSION) == 0) {
+		if ((H5Pset_chunk(dataset_property_id, 1, chunk_dims) < 0) || (H5Pset_deflate(dataset_property_id, COMPRESSION_LEVEL) < 0)) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
+		}
+	} else if (strcmp(COMPRESSION, HVCFConfiguration::BLOSC_LZ4HC_COMPRESSION) == 0) {
+		unsigned int cd_values[7];
+		cd_values[4] = COMPRESSION_LEVEL;
+		// 0 -- shuffle not active, 1 -- shuffle active
+		cd_values[5] = 1;
+		// Compressor to use
+		cd_values[6] = BLOSC_LZ4HC; // does better but slower compression. decompression is still very fast.
+		if ((H5Pset_chunk(dataset_property_id, 1, chunk_dims) < 0) || (H5Pset_filter(dataset_property_id, FILTER_BLOSC, H5Z_FLAG_OPTIONAL, 7, cd_values) < 0)) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
+		}
+	} else {
+		if (H5Pset_chunk(dataset_property_id, 1, chunk_dims) < 0) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
+		}
 	}
 
 	if ((dataset_id = H5Dcreate(index_group_id, VARIANT_HASH_INDEX, hash_index_entry_type_id, file_dataspace_id, H5P_DEFAULT, dataset_property_id, H5P_DEFAULT)) < 0) {
@@ -966,7 +1050,7 @@ void HVCF::create_indices(hid_t chromosome_group_id) throw (HVCFWriteException) 
 			}
 			names_index_buckets_it->second.push_back(file_offset[0]);
 
-			if ((intervals.size() == 0) || (intervals.back().size() >= MAX_VARIANTS_PER_INTERVAL)) {
+			if ((intervals.size() == 0) || (intervals.back().size() >= MAX_VARIANTS_IN_INTERVAL_BUCKET)) {
 				intervals.emplace_back();
 			}
 			intervals.back().push_back(file_offset[0]);
@@ -1281,11 +1365,8 @@ void HVCF::write_variant(const Variant& variant) throw (HVCFWriteException) {
 	}
 
 	if (buffers_it->second->is_full()) {
-		//flush!
-		cout << "flush " << buffers_it->second->get_n_variants() << endl;
 		write_haplotypes(chromosomes_it->second->get(), buffers_it->second->get_haplotypes_buffer(), buffers_it->second->get_n_variants(), buffers_it->second->get_n_haplotypes());
 		write_variants(chromosomes_it->second->get(), buffers_it->second->get_variants_buffer(), buffers_it->second->get_n_variants());
-		cout << "flushed" << endl;
 		buffers_it->second->reset();
 	}
 
@@ -1934,7 +2015,6 @@ long long int HVCF::get_variant_offset_by_name(const string& chromosome, const s
 	hsize_t hash_value = hash_function(name) % N_HASH_BUCKETS;
 
 	hsize_t offset[1]{hash_value};
-	hsize_t file_dims[1]{0};
 	hsize_t mem_dims[1]{1};
 
 	hash_index_entry_type hash_index_entry;

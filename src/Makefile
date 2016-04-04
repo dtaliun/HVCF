@@ -21,6 +21,7 @@ all: HVCFException.o \
 	HDF5DatatypeIdentifier.o \
 	HDF5PropertyIdentifier.o \
 	WriteBuffer.o \
+	HVCFConfiguration.o \
 	HVCF.o
 
 .cpp.o:

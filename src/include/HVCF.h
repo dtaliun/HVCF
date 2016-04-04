@@ -28,6 +28,7 @@
 #include "HDF5DatatypeIdentifier.h"
 #include "HDF5DataspaceIdentifier.h"
 #include "HDF5PropertyIdentifier.h"
+#include "HVCFConfiguration.h"
 #include "../../../auxc/MiniVCF/src/include/VCFReader.h"
 #include "WriteBuffer.h"
 #include "../blosc/blosc_filter.h"
@@ -45,8 +46,13 @@ private:
 	HDF5GroupIdentifier samples_group_id;
 	HDF5GroupIdentifier chromosomes_group_id;
 
-	static constexpr unsigned int N_HASH_BUCKETS = 10000;
-	static constexpr unsigned int MAX_VARIANTS_PER_INTERVAL = 1000;
+	unsigned int N_HASH_BUCKETS;
+	unsigned int MAX_VARIANTS_IN_INTERVAL_BUCKET;
+	unsigned int VARIANTS_CHUNK_SIZE;
+	unsigned int SAMPLES_CHUNK_SIZE;
+	const char* COMPRESSION;
+	unsigned int COMPRESSION_LEVEL;
+
 	static constexpr char SAMPLES_GROUP[] = "samples";
 	static constexpr char SAMPLES_ALL_DATASET[] = "ALL";
 
@@ -97,6 +103,7 @@ private:
 
 public:
 	HVCF();
+	HVCF(const HVCFConfiguration& configuration);
 	virtual ~HVCF();
 
 	void create(const string& name) throw (HVCFWriteException);
