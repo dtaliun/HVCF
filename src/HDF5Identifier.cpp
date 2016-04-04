@@ -6,7 +6,7 @@ HDF5Identifier::HDF5Identifier() : identifier(numeric_limits<hid_t>::min()) {
 
 }
 
-HDF5Identifier::~HDF5Identifier() throw (HVCFException) {
+HDF5Identifier::~HDF5Identifier() noexcept {
 
 }
 

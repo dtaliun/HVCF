@@ -10,7 +10,7 @@ namespace sph_umich_edu {
 class HDF5DatatypeIdentifier: public HDF5Identifier {
 public:
 	HDF5DatatypeIdentifier();
-	virtual ~HDF5DatatypeIdentifier() throw (HVCFException);
+	virtual ~HDF5DatatypeIdentifier() noexcept;
 
 	using HDF5Identifier::operator=;
 

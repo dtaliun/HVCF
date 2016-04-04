@@ -16,7 +16,7 @@ protected:
 
 public:
 	HDF5Identifier();
-	virtual ~HDF5Identifier() throw (HVCFException);
+	virtual ~HDF5Identifier() noexcept;
 
 	HDF5Identifier(const HDF5Identifier& hdf5identifier) = delete;
 	HDF5Identifier& operator=(const HDF5Identifier& hdf5identifier) = delete;

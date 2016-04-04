@@ -6,8 +6,12 @@ HDF5PropertyIdentifier::HDF5PropertyIdentifier() {
 
 }
 
-HDF5PropertyIdentifier::~HDF5PropertyIdentifier() {
-	close();
+HDF5PropertyIdentifier::~HDF5PropertyIdentifier() noexcept {
+	try {
+		close();
+	} catch (std::exception &e) {
+		// do not propagate any exceptions
+	}
 }
 
 void HDF5PropertyIdentifier::close() throw (HVCFException) {

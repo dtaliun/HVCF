@@ -104,7 +104,7 @@ private:
 public:
 	HVCF();
 	HVCF(const HVCFConfiguration& configuration);
-	virtual ~HVCF();
+	virtual ~HVCF() noexcept;
 
 	void create(const string& name) throw (HVCFWriteException);
 	void set_samples(const vector<string>& samples) throw (HVCFWriteException);
@@ -120,7 +120,7 @@ public:
 	vector<string> get_samples() throw (HVCFReadException);
 	vector<string> get_population(const string& name) throw (HVCFReadException);
 	hsize_t get_n_variants() throw (HVCFReadException);
-	hsize_t get_n_variants(const string& chromosome) throw (HVCFReadException);
+	hsize_t get_n_variants_in_chromosome(const string& chromosome) throw (HVCFReadException);
 
 	long long int get_variant_offset_by_position_eq(const string& chromosome, unsigned long long int position) throw (HVCFReadException);
 	long long int get_variant_offset_by_position_ge(const string& chromosome, unsigned long long int position) throw (HVCFReadException);

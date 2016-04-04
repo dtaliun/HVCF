@@ -6,8 +6,12 @@ HDF5DatasetIdentifier::HDF5DatasetIdentifier() {
 
 }
 
-HDF5DatasetIdentifier::~HDF5DatasetIdentifier() {
-	close();
+HDF5DatasetIdentifier::~HDF5DatasetIdentifier() noexcept {
+	try {
+		close();
+	} catch (std::exception &e) {
+		// do not propagate any exceptions
+	}
 }
 
 void HDF5DatasetIdentifier::close() throw (HVCFException) {

@@ -6,8 +6,12 @@ HDF5GroupIdentifier::HDF5GroupIdentifier() {
 
 }
 
-HDF5GroupIdentifier::~HDF5GroupIdentifier() {
-	close();
+HDF5GroupIdentifier::~HDF5GroupIdentifier() noexcept {
+	try {
+		close();
+	} catch (std::exception &e) {
+		// do not propagate any exceptions
+	}
 }
 
 void HDF5GroupIdentifier::close() throw (HVCFException) {

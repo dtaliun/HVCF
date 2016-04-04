@@ -4,6 +4,8 @@
 #include <chrono>
 #include "../src/include/HVCF.h"
 
+using namespace std;
+
 class HVCFTestLD : public::testing::Test {
 protected:
 	unordered_map<unsigned long long int, unordered_map<unsigned long long int, double>> precomputed_ld;
@@ -69,7 +71,7 @@ protected:
 		for (auto&& entry : precomputed_ld) {
 			bool all_nan = true;
 			for (auto&& entry_entry : entry.second) {
-				if (!isnan(entry_entry.second)) {
+				if (!std::isnan(entry_entry.second)) {
 					all_nan = false;
 					break;
 				}
@@ -134,7 +136,7 @@ TEST_F(HVCFTestLD, LD) {
 	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(81u, result.size());
 	for (auto&& pair : result) {
-		if (isnan(precomputed_ld.at(pair.position1).at(pair.position2))) {
+		if (std::isnan(precomputed_ld.at(pair.position1).at(pair.position2))) {
 			ASSERT_TRUE(pair.rsquare);
 		} else {
 			ASSERT_NEAR(pair.rsquare, precomputed_ld.at(pair.position1).at(pair.position2), 0.00000001);
@@ -150,7 +152,7 @@ TEST_F(HVCFTestLD, LD) {
 	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(1u, result.size());
 	for (auto&& pair : result) {
-		if (isnan(precomputed_ld.at(pair.position1).at(pair.position2))) {
+		if (std::isnan(precomputed_ld.at(pair.position1).at(pair.position2))) {
 			ASSERT_TRUE(pair.rsquare);
 		} else {
 			ASSERT_NEAR(pair.rsquare, precomputed_ld.at(pair.position1).at(pair.position2), 0.00000001);
@@ -166,7 +168,7 @@ TEST_F(HVCFTestLD, LD) {
 	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(0u, result.size());
 	for (auto&& pair : result) {
-		if (isnan(precomputed_ld.at(pair.position1).at(pair.position2))) {
+		if (std::isnan(precomputed_ld.at(pair.position1).at(pair.position2))) {
 			ASSERT_TRUE(pair.rsquare);
 		} else {
 			ASSERT_NEAR(pair.rsquare, precomputed_ld.at(pair.position1).at(pair.position2), 0.00000001);
@@ -182,7 +184,7 @@ TEST_F(HVCFTestLD, LD) {
 	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(7u, result.size());
 	for (auto&& pair : result) {
-		if (isnan(precomputed_ld.at(pair.position1).at(pair.position2))) {
+		if (std::isnan(precomputed_ld.at(pair.position1).at(pair.position2))) {
 			ASSERT_TRUE(pair.rsquare);
 		} else {
 			ASSERT_NEAR(pair.rsquare, precomputed_ld.at(pair.position1).at(pair.position2), 0.00000001);
@@ -198,7 +200,7 @@ TEST_F(HVCFTestLD, LD) {
 	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(7u, result.size());
 	for (auto&& pair : result) {
-		if (isnan(precomputed_ld.at(pair.position1).at(pair.position2))) {
+		if (std::isnan(precomputed_ld.at(pair.position1).at(pair.position2))) {
 			ASSERT_TRUE(pair.rsquare);
 		} else {
 			ASSERT_NEAR(pair.rsquare, precomputed_ld.at(pair.position1).at(pair.position2), 0.00000001);
@@ -214,7 +216,7 @@ TEST_F(HVCFTestLD, LD) {
 	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(6u, result.size());
 	for (auto&& pair : result) {
-		if (isnan(precomputed_ld.at(pair.position1).at(pair.position2))) {
+		if (std::isnan(precomputed_ld.at(pair.position1).at(pair.position2))) {
 			ASSERT_TRUE(pair.rsquare);
 		} else {
 			ASSERT_NEAR(pair.rsquare, precomputed_ld.at(pair.position1).at(pair.position2), 0.00000001);
@@ -230,7 +232,7 @@ TEST_F(HVCFTestLD, LD) {
 	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(1u, result.size());
 	for (auto&& pair : result) {
-		if (isnan(precomputed_ld.at(pair.position1).at(pair.position2))) {
+		if (std::isnan(precomputed_ld.at(pair.position1).at(pair.position2))) {
 			ASSERT_TRUE(pair.rsquare);
 		} else {
 			ASSERT_NEAR(pair.rsquare, precomputed_ld.at(pair.position1).at(pair.position2), 0.00000001);
@@ -246,7 +248,7 @@ TEST_F(HVCFTestLD, LD) {
 	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(0u, result.size());
 	for (auto&& pair : result) {
-		if (isnan(precomputed_ld.at(pair.position1).at(pair.position2))) {
+		if (std::isnan(precomputed_ld.at(pair.position1).at(pair.position2))) {
 			ASSERT_TRUE(pair.rsquare);
 		} else {
 			ASSERT_NEAR(pair.rsquare, precomputed_ld.at(pair.position1).at(pair.position2), 0.00000001);
@@ -262,7 +264,7 @@ TEST_F(HVCFTestLD, LD) {
 	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(3u, result.size());
 	for (auto&& pair : result) {
-		if (isnan(precomputed_ld.at(pair.position1).at(pair.position2))) {
+		if (std::isnan(precomputed_ld.at(pair.position1).at(pair.position2))) {
 			ASSERT_TRUE(pair.rsquare);
 		} else {
 			ASSERT_NEAR(pair.rsquare, precomputed_ld.at(pair.position1).at(pair.position2), 0.00000001);
@@ -278,7 +280,7 @@ TEST_F(HVCFTestLD, LD) {
 	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(2u, result.size());
 	for (auto&& pair : result) {
-		if (isnan(precomputed_ld.at(pair.position1).at(pair.position2))) {
+		if (std::isnan(precomputed_ld.at(pair.position1).at(pair.position2))) {
 			ASSERT_TRUE(pair.rsquare);
 		} else {
 			ASSERT_NEAR(pair.rsquare, precomputed_ld.at(pair.position1).at(pair.position2), 0.00000001);
@@ -294,7 +296,7 @@ TEST_F(HVCFTestLD, LD) {
 	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(3u, result.size());
 	for (auto&& pair : result) {
-		if (isnan(precomputed_ld.at(pair.position1).at(pair.position2))) {
+		if (std::isnan(precomputed_ld.at(pair.position1).at(pair.position2))) {
 			ASSERT_TRUE(pair.rsquare);
 		} else {
 			ASSERT_NEAR(pair.rsquare, precomputed_ld.at(pair.position1).at(pair.position2), 0.00000001);
@@ -310,7 +312,7 @@ TEST_F(HVCFTestLD, LD) {
 	GTEST_LOG_(INFO) << "Elapsed time = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(0u, result.size());
 	for (auto&& pair : result) {
-		if (isnan(precomputed_ld.at(pair.position1).at(pair.position2))) {
+		if (std::isnan(precomputed_ld.at(pair.position1).at(pair.position2))) {
 			ASSERT_TRUE(pair.rsquare);
 		} else {
 			ASSERT_NEAR(pair.rsquare, precomputed_ld.at(pair.position1).at(pair.position2), 0.00000001);
