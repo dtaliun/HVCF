@@ -606,7 +606,7 @@ TEST_F(HVCFTestReadWrite, LargeFileTest) {
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTestReadWrite, DISABLED_ChunkReadTest) {
+TEST_F(HVCFTestReadWrite, ChunkReadTest) {
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	std::chrono::duration<double> elapsed_seconds;
 	sph_umich_edu::HVCF hvcf;
