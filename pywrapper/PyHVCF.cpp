@@ -2,17 +2,25 @@
 #include <boost/python/def.hpp>
 #include <boost/python/return_by_value.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
+#include <boost/python/exception_translator.hpp>
+#include <python2.7/Python.h>
 
 #include "../src/include/HVCF.h"
 
 using namespace sph_umich_edu;
 using namespace boost::python;
 
+void translator(const HVCFException& e) {
+	PyErr_SetString(PyExc_UserWarning, e.what());
+}
+
 void (HVCF::*compute_region_ld)(const string& chromosome, unsigned long long int start_position, unsigned long long end_position, vector<variants_pair>& result) = &HVCF::compute_ld;
 void (HVCF::*compute_lead_ld)(const string& chromosome, const string& lead_variant_name, unsigned long long int start_position, unsigned long long end_position, vector<variants_pair>& result) = &HVCF::compute_ld;
 
 BOOST_PYTHON_MODULE(PyHVCF)
 {
+	register_exception_translator<HVCFException>(&translator);
+
 	def("get_n_all_opened_objects", HVCF::get_n_all_opened_objects);
 
 	class_<variants_pair>("VariantsPair", init<const char*, unsigned long int, const char*, unsigned long int , double, double>())
@@ -24,7 +32,7 @@ BOOST_PYTHON_MODULE(PyHVCF)
 			.def_readonly("rsquare", &VariantsPair::rsquare)
 		;
 
-	class_<vector<string>>("Vector")
+	class_<vector<string>>("NamesVector")
 			.def(vector_indexing_suite<std::vector<std::string>>())
 		;
 
