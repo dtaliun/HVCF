@@ -135,6 +135,8 @@ public:
 	static unsigned int get_n_all_opened_objects();
 
 	void chunk_read_test(const string& chromosome, unsigned long long int start_position, unsigned long long end_position) throw (HVCFReadException);
+
+	void chunk_read_test2() throw (HVCFReadException);
 };
 
 }

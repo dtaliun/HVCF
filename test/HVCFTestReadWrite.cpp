@@ -17,7 +17,7 @@ protected:
 	}
 };
 
-TEST_F(HVCFTestReadWrite, Create) {
+TEST_F(HVCFTestReadWrite, DISABLED_Create) {
 	vector<string> in_samples{"sample1", "sample2", "sample3", "sample4", "sample5"};
 	vector<string> in_pop1_samples{"sample5", "sample2", "sample3"};
 	vector<string> in_pop1_samples_ordered{"sample2", "sample3", "sample5"};
@@ -140,6 +140,55 @@ TEST_F(HVCFTestReadWrite, DISABLED_WriteVCF) {
 
 	hvcf.close();
 	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+}
+
+TEST_F(HVCFTestReadWrite, WriteVCF) {
+//	{ // 'dummy' scope to check if HVCF object closes every opened HDF5 identifier on its destruction
+//		sph_umich_edu::HVCF hvcf;
+//		sph_umich_edu::VCFReader vcf;
+//
+//		ASSERT_EQ(0u, hvcf.get_n_opened_objects());
+//		ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+//
+//		vcf.open("1000G_phase3.ALL.chr20-22.10K.vcf.gz");
+//		hvcf.create("test.h5");
+//
+//		hvcf.set_samples(std::move(vcf.get_variant().get_samples()));
+//
+//		ASSERT_EQ(2504u, hvcf.get_n_samples());
+//
+//		ASSERT_EQ(3u, hvcf.get_n_opened_objects());
+//		ASSERT_EQ(3u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+//
+//		while (vcf.read_next_variant()) {
+//			hvcf.write_variant(vcf.get_variant());
+//		}
+//		hvcf.flush_write_buffer();
+//
+//		hvcf.create_indices();
+//		ASSERT_EQ(6u, hvcf.get_n_opened_objects());
+//		vcf.close();
+//
+//		ASSERT_EQ(6u, hvcf.get_n_opened_objects());
+//		ASSERT_EQ(6u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+//	}
+//	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+
+	sph_umich_edu::HVCF hvcf;
+
+	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+
+	hvcf.open("test.h5");
+	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(6u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+
+	hvcf.chunk_read_test2();
+	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(6u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+
+	hvcf.close();
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
