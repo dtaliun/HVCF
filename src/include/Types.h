@@ -51,19 +51,37 @@ typedef struct VariantsPair{
 
 	}
 
-	VariantsPair(const VariantsPair& pair) = delete;
-	VariantsPair& operator=(const VariantsPair& pair) = delete;
+	bool operator==(VariantsPair const& pair) const { return (position1 == pair.position1 && position2 == pair.position2); }
 
-	VariantsPair(VariantsPair&& pair) {
-		name1 = std::move(pair.name1);
-		position1 = pair.position1;
-		name2 = std::move(pair.name2);
-		position2 = pair.position2;
-		r = pair.r;
-		rsquare = pair.rsquare;
-	};
-
-	VariantsPair& operator=(VariantsPair&& pair) = delete;
+//	VariantsPair(const VariantsPair& pair) {
+//		name1 = pair.name1;
+//		position1 = pair.position1;
+//		name2 = pair.name2;
+//		position2 = pair.position2;
+//		r = pair.r;
+//		rsquare = pair.rsquare;
+//	}
+//
+//	VariantsPair& operator=(const VariantsPair& pair) {
+//		name1 = pair.name1;
+//		position1 = pair.position1;
+//		name2 = pair.name2;
+//		position2 = pair.position2;
+//		r = pair.r;
+//		rsquare = pair.rsquare;
+//		return *this;
+//	}
+//
+//	VariantsPair(VariantsPair&& pair) {
+//		name1 = std::move(pair.name1);
+//		position1 = pair.position1;
+//		name2 = std::move(pair.name2);
+//		position2 = pair.position2;
+//		r = pair.r;
+//		rsquare = pair.rsquare;
+//	};
+//
+//	VariantsPair& operator=(VariantsPair&& pair) = delete;
 
 } variants_pair;
 
