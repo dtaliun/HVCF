@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, abort
 import re
 
 app = Flask(__name__)
@@ -18,13 +18,14 @@ def parse_filter_argument(filter):
    start = 0
    end = len(filter)
 
+   filters = []
+
    while True:
       match = operation_regex.match(filter, start)
       if not match:
-         print 'bad 1'
-         return
+         raise Exception()
 
-      print match.groups()
+      filters.append(match.groups())
 
       start = match.end()
       if start >= end:
@@ -32,9 +33,11 @@ def parse_filter_argument(filter):
 
       match = and_regex.match(filter, start) 
       if not match:
-         print 'bad2'
-         return
+         raise Exception()
+
       start = match.end()
+
+   return filters
 
 @app.route('/statistic/pair/LD/', methods = ['GET'])
 def get_available_datasets():
@@ -42,11 +45,14 @@ def get_available_datasets():
 
 @app.route('/statistic/pair/LD/results', methods = ['GET'])
 def get_ld():
-   
-   for arg in request.args:
-      if arg == 'filter':
-         parse_filter_argument(request.args[arg])
+   try: 
+      for arg in request.args:
+         if arg == 'filter':
+            filters = parse_filter_argument(request.args[arg])
+   except Exception:
+      abort(501, "Incorrect arguments provided.")
 
+   print filters
 
    return 'oops'
 
