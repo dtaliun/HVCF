@@ -16,6 +16,7 @@
 #include <armadillo>
 
 #include "hdf5.h"
+
 #include "Types.h"
 #include "HVCFOpenException.h"
 #include "HVCFCloseException.h"
@@ -72,6 +73,9 @@ private:
 	static constexpr char VARIANT_HASH_INDEX[] = "hashes";
 	static constexpr char INDEX_BUCKETS[] = "buckets";
 
+	unordered_map<string, unique_ptr<HDF5GroupIdentifier>> chromosomes;
+	unordered_map<string, unique_ptr<WriteBuffer>> write_buffers;
+
 	hid_t create_variants_entry_memory_datatype() throw (HVCFCreateException);
 	hid_t create_ull_index_entry_memory_datatype() throw (HVCFCreateException);
 	hid_t create_string_index_entry_memory_datatype() throw (HVCFCreateException);
@@ -97,9 +101,6 @@ private:
 	void write_variants(hid_t group_id, const variants_entry_type* buffer, unsigned int n_variants) throw (HVCFWriteException);
 
 	void create_indices(hid_t chromosome_group_id) throw (HVCFWriteException);
-
-	unordered_map<string, unique_ptr<HDF5GroupIdentifier>> chromosomes;
-	unordered_map<string, unique_ptr<WriteBuffer>> write_buffers;
 
 public:
 	HVCF();

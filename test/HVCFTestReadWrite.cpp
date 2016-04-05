@@ -80,7 +80,7 @@ TEST_F(HVCFTestReadWrite, Create) {
 
 }
 
-TEST_F(HVCFTestReadWrite, WriteVCF) {
+TEST_F(HVCFTestReadWrite, DISABLED_WriteVCF) {
 	{ // 'dummy' scope to check if HVCF object closes every opened HDF5 identifier on its destruction
 		sph_umich_edu::HVCF hvcf;
 		sph_umich_edu::VCFReader vcf;
@@ -143,7 +143,7 @@ TEST_F(HVCFTestReadWrite, WriteVCF) {
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTestReadWrite, VariantLookupByPosition) {
+TEST_F(HVCFTestReadWrite, DISABLED_VariantLookupByPosition) {
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	std::chrono::duration<double> elapsed_seconds;
 	sph_umich_edu::HVCF hvcf;
@@ -339,7 +339,7 @@ TEST_F(HVCFTestReadWrite, VariantLookupByPosition) {
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTestReadWrite, VariantLookupByName) {
+TEST_F(HVCFTestReadWrite, DISABLED_VariantLookupByName) {
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	std::chrono::duration<double> elapsed_seconds;
 	sph_umich_edu::HVCF hvcf;
@@ -387,7 +387,7 @@ TEST_F(HVCFTestReadWrite, VariantLookupByName) {
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTestReadWrite, LargeFileTest) {
+TEST_F(HVCFTestReadWrite, DISABLED_LargeFileTest) {
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	std::chrono::duration<double> elapsed_seconds;
 	sph_umich_edu::HVCF hvcf;
@@ -606,7 +606,7 @@ TEST_F(HVCFTestReadWrite, LargeFileTest) {
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTestReadWrite, ChunkReadTest) {
+TEST_F(HVCFTestReadWrite, DISABLED_ChunkReadTest) {
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	std::chrono::duration<double> elapsed_seconds;
 	sph_umich_edu::HVCF hvcf;

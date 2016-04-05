@@ -88,7 +88,7 @@ protected:
 	}
 };
 
-TEST_F(HVCFTestLD, LD) {
+TEST_F(HVCFTestLD, DISABLED_LD) {
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	std::chrono::duration<double> elapsed_seconds;
 	sph_umich_edu::HVCF hvcf;
@@ -326,7 +326,7 @@ TEST_F(HVCFTestLD, LD) {
 
 }
 
-TEST_F(HVCFTestLD, LargeLD) {
+TEST_F(HVCFTestLD, DISABLED_LargeLD) {
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	std::chrono::duration<double> elapsed_seconds;
 	sph_umich_edu::HVCF hvcf;
