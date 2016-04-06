@@ -43,6 +43,11 @@ typedef struct {
 	hsize_t offset_2;
 } subsets_entry_type;
 
+typedef struct {
+	vector<tuple<hsize_t, hsize_t, hsize_t>> chunks; // offset_1 (start), offset_2 (end), size (offset_2 - offset_1 + 1)
+	hsize_t n_samples;
+} subsets_cache_entry;
+
 typedef struct VariantsPair{
 	string name1;
 	unsigned long long int position1;

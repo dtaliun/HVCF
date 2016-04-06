@@ -78,6 +78,8 @@ private:
 	unordered_map<string, unique_ptr<HDF5GroupIdentifier>> chromosomes;
 	unordered_map<string, unique_ptr<WriteBuffer>> write_buffers;
 
+	unordered_map<string, subsets_cache_entry> subsets_cache;
+
 	hid_t create_variants_entry_memory_datatype() throw (HVCFCreateException);
 	hid_t create_subsets_entry_memory_datatype() throw (HVCFCreateException);
 	hid_t create_ull_index_entry_memory_datatype() throw (HVCFCreateException);
@@ -110,6 +112,8 @@ private:
 	void write_variant(const Variant& variant) throw (HVCFWriteException);
 	void flush_write_buffer() throw (HVCFWriteException);
 
+	void load_subsets_cache() throw (HVCFReadException);
+	void load_cache() throw (HVCFReadException);
 public:
 	HVCF();
 	HVCF(const HVCFConfiguration& configuration);
@@ -137,8 +141,8 @@ public:
 	long long int get_variant_offset_by_position_le(const string& chromosome, unsigned long long int position) throw (HVCFReadException);
 	long long int get_variant_offset_by_name(const string& chromosome, const string& name) throw (HVCFReadException);
 
-	void compute_ld(const string& chromosome, unsigned long long int start_position, unsigned long long end_position, vector<variants_pair>& result) throw (HVCFReadException);
-	void compute_ld(const string& chromosome, const string& lead_variant_name, unsigned long long int start_position, unsigned long long end_position, vector<variants_pair>& result) throw (HVCFReadException);
+	void compute_ld(const string& chromosome, const string& subset, unsigned long long int start_position, unsigned long long end_position, vector<variants_pair>& result) throw (HVCFReadException);
+	void compute_ld(const string& chromosome, const string& subset, const string& lead_variant_name, unsigned long long int start_position, unsigned long long end_position, vector<variants_pair>& result) throw (HVCFReadException);
 
 	unsigned int get_n_opened_objects() const;
 	static unsigned int get_n_all_opened_objects();

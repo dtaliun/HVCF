@@ -61,14 +61,14 @@ protected:
 	}
 };
 
-TEST_F(HVCFTestReadWrite, DISABLED_ImportVCF) {
+TEST_F(HVCFTestReadWrite, DISABLED_ImportVCF_EUR) {
 	{ // 'dummy' scope to check if HVCF object closes every opened HDF5 identifier on its destruction
 		sph_umich_edu::HVCF hvcf;
 
 		ASSERT_EQ(0u, hvcf.get_n_opened_objects());
 		ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
-		hvcf.create("test.h5");
+		hvcf.create("test_eur.h5");
 		hvcf.import_vcf("1000G_phase3.EUR.chr20-22.10K.vcf.gz");
 
 		ASSERT_EQ(503u, hvcf.get_n_samples());
@@ -84,7 +84,7 @@ TEST_F(HVCFTestReadWrite, DISABLED_ImportVCF) {
 	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
-	hvcf.open("test.h5");
+	hvcf.open("test_eur.h5");
 	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
 	ASSERT_EQ(6u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
@@ -108,14 +108,14 @@ TEST_F(HVCFTestReadWrite, DISABLED_ImportVCF) {
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTestReadWrite, ImportVCF) {
+TEST_F(HVCFTestReadWrite, DISABLED_ImportVCF_ALL) {
 	{ // 'dummy' scope to check if HVCF object closes every opened HDF5 identifier on its destruction
 		sph_umich_edu::HVCF hvcf;
 
 		ASSERT_EQ(0u, hvcf.get_n_opened_objects());
 		ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
-		hvcf.create("test.h5");
+		hvcf.create("test_all.h5");
 		hvcf.import_vcf("1000G_phase3.ALL.chr20-22.10K.vcf.gz");
 
 		ASSERT_EQ(2504u, hvcf.get_n_samples());
@@ -155,7 +155,7 @@ TEST_F(HVCFTestReadWrite, ImportVCF) {
 	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
-	hvcf.open("test.h5");
+	hvcf.open("test_all.h5");
 	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
 	ASSERT_EQ(6u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
@@ -175,7 +175,7 @@ TEST_F(HVCFTestReadWrite, DISABLED_VariantLookupByPosition) {
 	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
-	hvcf.open("test.h5");
+	hvcf.open("test_eur.h5");
 	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
 	ASSERT_EQ(6u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
@@ -371,7 +371,7 @@ TEST_F(HVCFTestReadWrite, DISABLED_VariantLookupByName) {
 	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
-	hvcf.open("test.h5");
+	hvcf.open("test_eur.h5");
 	ASSERT_EQ(6u, hvcf.get_n_opened_objects());
 	ASSERT_EQ(6u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
