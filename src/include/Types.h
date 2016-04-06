@@ -37,6 +37,12 @@ typedef struct {
 	unsigned long long int position;
 } variants_entry_type;
 
+typedef struct {
+	char* name;
+	hsize_t offset_1;
+	hsize_t offset_2;
+} populations_entry_type;
+
 typedef struct VariantsPair{
 	string name1;
 	unsigned long long int position1;

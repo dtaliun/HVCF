@@ -54,15 +54,16 @@ private:
 	const char* COMPRESSION;
 	unsigned int COMPRESSION_LEVEL;
 
-	static constexpr char SAMPLES_GROUP[] = "samples";
-	static constexpr char SAMPLES_ALL_DATASET[] = "ALL";
-
 	static constexpr char CHROMOSOMES_GROUP[] = "chromosomes";
+	static constexpr char SAMPLES_GROUP[] = "samples";
 	static constexpr char VARIANTS_DATASET[] = "variants";
 	static constexpr char HAPLOTYPES_DATASET[] = "haplotypes";
+	static constexpr char SAMPLE_NAMES_DATASET[] = "names";
+	static constexpr char POPULATIONS_DATASET[] = "populations";
 
 	static constexpr char VARIABLE_LENGTH_STRING_TYPE[] = "variable_length_string_type";
 	static constexpr char VARIANTS_ENTRY_TYPE[] = "variants_entry_type";
+	static constexpr char POPULATIONS_ENTRY_TYPE[] = "populations_index_entry_type";
 	static constexpr char STRING_INDEX_ENTRY_TYPE[] = "string_index_entry_type";
 	static constexpr char INTERVAL_INDEX_ENTRY_TYPE[] = "interval_index_entry_type";
 	static constexpr char HASH_INDEX_ENTRY_TYPE[] = "hash_index_entry_type";
@@ -77,13 +78,14 @@ private:
 	unordered_map<string, unique_ptr<WriteBuffer>> write_buffers;
 
 	hid_t create_variants_entry_memory_datatype() throw (HVCFCreateException);
+	hid_t create_populations_entry_memory_datatype() throw (HVCFCreateException);
 	hid_t create_ull_index_entry_memory_datatype() throw (HVCFCreateException);
 	hid_t create_string_index_entry_memory_datatype() throw (HVCFCreateException);
 	hid_t create_interval_index_entry_memory_datatype() throw (HVCFCreateException);
 	hid_t create_hash_index_entry_memory_datatype() throw (HVCFCreateException);
 
-	hid_t create_strings_1D_dataset(const string& name, hid_t group_id, hsize_t chunk_size) throw (HVCFWriteException);
-	hid_t create_hsize_1D_dataset(const string& name, hid_t group_id, hsize_t chunk_size) throw (HVCFWriteException);
+	hid_t create_sample_names_dataset(hid_t group_id, hsize_t chunk_size) throw (HVCFWriteException);
+	hid_t create_populations_dataset(hid_t group_id, hsize_t chunk_size) throw (HVCFWriteException);
 	hid_t create_haplotypes_dataset(hid_t group_id, hsize_t variants_chunk_size, hsize_t samples_chunk_size) throw (HVCFWriteException);
 	hid_t create_variants_dataset(hid_t group_id, hsize_t chunk_size) throw (HVCFWriteException);
 	hid_t create_chromosome_group(const string& name) throw (HVCFWriteException);
@@ -108,8 +110,11 @@ public:
 	virtual ~HVCF() noexcept;
 
 	void create(const string& name) throw (HVCFWriteException);
+
 	void set_samples(const vector<string>& samples) throw (HVCFWriteException);
 	void set_population(const string& name, const vector<string>& samples) throw (HVCFWriteException);
+	void set_population2(const string& name, const vector<string>& samples) throw (HVCFWriteException);
+
 	void write_variant(const Variant& variant) throw (HVCFWriteException);
 	void flush_write_buffer() throw (HVCFWriteException);
 	void create_indices() throw (HVCFWriteException);

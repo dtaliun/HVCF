@@ -2,13 +2,15 @@
 
 namespace sph_umich_edu {
 
-constexpr char HVCF::SAMPLES_GROUP[];
-constexpr char HVCF::SAMPLES_ALL_DATASET[];
 constexpr char HVCF::CHROMOSOMES_GROUP[];
+constexpr char HVCF::SAMPLES_GROUP[];
 constexpr char HVCF::VARIANTS_DATASET[];
 constexpr char HVCF::HAPLOTYPES_DATASET[];
+constexpr char HVCF::SAMPLE_NAMES_DATASET[];
+constexpr char HVCF::POPULATIONS_DATASET[];
 constexpr char HVCF::VARIABLE_LENGTH_STRING_TYPE[];
 constexpr char HVCF::VARIANTS_ENTRY_TYPE[];
+constexpr char HVCF::POPULATIONS_ENTRY_TYPE[];
 constexpr char HVCF::STRING_INDEX_ENTRY_TYPE[];
 constexpr char HVCF::INTERVAL_INDEX_ENTRY_TYPE[];
 constexpr char HVCF::HASH_INDEX_ENTRY_TYPE[];
@@ -66,6 +68,33 @@ hid_t HVCF::create_variants_entry_memory_datatype() throw (HVCFCreateException) 
 	}
 
 	if (H5Tinsert(memory_datatype_id, "position", HOFFSET(variants_entry_type, position), H5T_NATIVE_ULLONG) < 0) {
+		throw HVCFCreateException(__FILE__, __FUNCTION__, __LINE__, "Error while adding new member to compound datatype.");
+	}
+
+	return memory_datatype_id.release();
+}
+
+hid_t HVCF::create_populations_entry_memory_datatype() throw (HVCFCreateException) {
+	HDF5DatatypeIdentifier native_string_datatype_id;
+	HDF5DatatypeIdentifier memory_datatype_id;
+
+	if ((native_string_datatype_id = H5Topen(file_id, VARIABLE_LENGTH_STRING_TYPE, H5P_DEFAULT)) < 0) {
+		throw HVCFCreateException(__FILE__, __FUNCTION__, __LINE__, "Error while opening committed datatype.");
+	}
+
+	if ((memory_datatype_id = H5Tcreate(H5T_COMPOUND, sizeof(populations_entry_type))) < 0) {
+		throw HVCFCreateException(__FILE__, __FUNCTION__, __LINE__, "Error while creating compound datatype.");
+	}
+
+	if (H5Tinsert(memory_datatype_id, "name", HOFFSET(populations_entry_type, name), native_string_datatype_id) < 0) {
+		throw HVCFCreateException(__FILE__, __FUNCTION__, __LINE__, "Error while adding new member to compound datatype.");
+	}
+
+	if (H5Tinsert(memory_datatype_id, "offset_1", HOFFSET(populations_entry_type, offset_1), H5T_NATIVE_HSIZE) < 0) {
+		throw HVCFCreateException(__FILE__, __FUNCTION__, __LINE__, "Error while adding new member to compound datatype.");
+	}
+
+	if (H5Tinsert(memory_datatype_id, "offset_2", HOFFSET(populations_entry_type, offset_2), H5T_NATIVE_HSIZE) < 0) {
 		throw HVCFCreateException(__FILE__, __FUNCTION__, __LINE__, "Error while adding new member to compound datatype.");
 	}
 
@@ -163,75 +192,6 @@ hid_t HVCF::create_hash_index_entry_memory_datatype() throw (HVCFCreateException
 	}
 
 	return memory_datatype_id.release();
-}
-
-hid_t HVCF::create_strings_1D_dataset(const string& name, hid_t group_id, hsize_t chunk_size) throw (HVCFWriteException) {
-	HDF5DataspaceIdentifier dataspace_id;
-	HDF5DatasetIdentifier dataset_id;
-	HDF5PropertyIdentifier dataset_property_id;
-	HDF5DatatypeIdentifier native_string_datatype_id;
-
-	hsize_t initial_dims[1]{0};
-	hsize_t maximum_dims[1]{H5S_UNLIMITED};
-	hsize_t chunk_dims[1]{chunk_size};
-
-	if (name.length() == 0u) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Empty dataset name.");
-	}
-
-	if ((native_string_datatype_id = H5Topen(file_id, VARIABLE_LENGTH_STRING_TYPE, H5P_DEFAULT)) < 0) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while opening datatype.");
-	}
-
-	if ((dataspace_id = H5Screate_simple(1, initial_dims, maximum_dims)) < 0) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataspace.");
-	}
-
-	if ((dataset_property_id = H5Pcreate(H5P_DATASET_CREATE)) < 0) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataset property.");
-	}
-
-	if ((H5Pset_chunk(dataset_property_id, 1, chunk_dims) < 0) || (H5Pset_deflate(dataset_property_id, 9) < 0)) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
-	}
-
-	if ((dataset_id = H5Dcreate(group_id, name.c_str(), native_string_datatype_id, dataspace_id, H5P_DEFAULT, dataset_property_id, H5P_DEFAULT)) < 0) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataset.");
-	}
-
-	return dataset_id.release();
-}
-
-hid_t HVCF::create_hsize_1D_dataset(const string&name, hid_t group_id, hsize_t chunk_size) throw (HVCFWriteException) {
-	HDF5DataspaceIdentifier dataspace_id;
-	HDF5DatasetIdentifier dataset_id;
-	HDF5PropertyIdentifier dataset_property_id;
-
-	hsize_t initial_dims[1]{0};
-	hsize_t maximum_dims[1]{H5S_UNLIMITED};
-	hsize_t chunk_dims[1]{chunk_size};
-
-	if (name.length() == 0u) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Empty dataset name.");
-	}
-
-	if ((dataspace_id = H5Screate_simple(1, initial_dims, maximum_dims)) < 0) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataspace.");
-	}
-
-	if ((dataset_property_id = H5Pcreate(H5P_DATASET_CREATE)) < 0) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataset property.");
-	}
-
-	if ((H5Pset_chunk(dataset_property_id, 1, chunk_dims) < 0) || (H5Pset_deflate(dataset_property_id, 9) < 0)) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
-	}
-
-	if ((dataset_id = H5Dcreate(group_id, name.c_str(), H5T_NATIVE_HSIZE, dataspace_id, H5P_DEFAULT, dataset_property_id, H5P_DEFAULT)) < 0) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataset.");
-	}
-
-	return dataset_id.release();
 }
 
 void HVCF::initialize_ull_index_buckets(hid_t chromosome_group_id, const char* index_group_name) throw (HVCFWriteException) {
@@ -336,6 +296,104 @@ void HVCF::initialize_string_index_buckets(hid_t chromosome_group_id, const char
 	if ((dataset_id = H5Dcreate(index_group_id, INDEX_BUCKETS, index_entry_type_id, dataspace_id, H5P_DEFAULT, dataset_property_id, H5P_DEFAULT)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataset.");
 	}
+}
+
+hid_t HVCF::create_sample_names_dataset(hid_t group_id, hsize_t chunk_size) throw (HVCFWriteException) {
+	HDF5DataspaceIdentifier dataspace_id;
+	HDF5DatasetIdentifier dataset_id;
+	HDF5PropertyIdentifier dataset_property_id;
+	HDF5DatatypeIdentifier native_string_datatype_id;
+
+	hsize_t initial_dims[1]{0};
+	hsize_t maximum_dims[1]{H5S_UNLIMITED};
+	hsize_t chunk_dims[1]{chunk_size};
+
+	if ((native_string_datatype_id = H5Topen(file_id, VARIABLE_LENGTH_STRING_TYPE, H5P_DEFAULT)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while opening datatype.");
+	}
+
+	if ((dataspace_id = H5Screate_simple(1, initial_dims, maximum_dims)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataspace.");
+	}
+
+	if ((dataset_property_id = H5Pcreate(H5P_DATASET_CREATE)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataset property.");
+	}
+
+	if (strcmp(COMPRESSION, HVCFConfiguration::GZIP_COMPRESSION) == 0) {
+		if ((H5Pset_chunk(dataset_property_id, 1, chunk_dims) < 0) || (H5Pset_deflate(dataset_property_id, COMPRESSION_LEVEL) < 0)) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
+		}
+	} else if (strcmp(COMPRESSION, HVCFConfiguration::BLOSC_LZ4HC_COMPRESSION) == 0) {
+		unsigned int cd_values[7];
+		cd_values[4] = COMPRESSION_LEVEL;
+		// 0 -- shuffle not active, 1 -- shuffle active
+		cd_values[5] = 1;
+		// Compressor to use
+		cd_values[6] = BLOSC_LZ4HC; // does better but slower compression. decompression is still very fast.
+		if ((H5Pset_chunk(dataset_property_id, 1, chunk_dims) < 0) || (H5Pset_filter(dataset_property_id, FILTER_BLOSC, H5Z_FLAG_OPTIONAL, 7, cd_values) < 0)) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
+		}
+	} else {
+		if (H5Pset_chunk(dataset_property_id, 1, chunk_dims) < 0) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
+		}
+	}
+
+	if ((dataset_id = H5Dcreate(group_id, SAMPLE_NAMES_DATASET, native_string_datatype_id, dataspace_id, H5P_DEFAULT, dataset_property_id, H5P_DEFAULT)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataset.");
+	}
+
+	return dataset_id.release();
+}
+
+hid_t HVCF::create_populations_dataset(hid_t group_id, hsize_t chunk_size) throw (HVCFWriteException) {
+	HDF5DataspaceIdentifier dataspace_id;
+	HDF5DatasetIdentifier dataset_id;
+	HDF5PropertyIdentifier dataset_property_id;
+	HDF5DatatypeIdentifier populations_entry_type_id;
+
+	hsize_t initial_dims[1]{0};
+	hsize_t maximum_dims[1]{H5S_UNLIMITED};
+	hsize_t chunk_dims[1]{chunk_size};
+
+	if ((populations_entry_type_id = H5Topen(file_id, POPULATIONS_ENTRY_TYPE, H5P_DEFAULT)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while opening datatype.");
+	}
+
+	if ((dataspace_id = H5Screate_simple(1, initial_dims, maximum_dims)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataspace.");
+	}
+
+	if ((dataset_property_id = H5Pcreate(H5P_DATASET_CREATE)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataset property.");
+	}
+
+	if (strcmp(COMPRESSION, HVCFConfiguration::GZIP_COMPRESSION) == 0) {
+		if ((H5Pset_chunk(dataset_property_id, 1, chunk_dims) < 0) || (H5Pset_deflate(dataset_property_id, COMPRESSION_LEVEL) < 0)) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
+		}
+	} else if (strcmp(COMPRESSION, HVCFConfiguration::BLOSC_LZ4HC_COMPRESSION) == 0) {
+		unsigned int cd_values[7];
+		cd_values[4] = COMPRESSION_LEVEL;
+		// 0 -- shuffle not active, 1 -- shuffle active
+		cd_values[5] = 1;
+		// Compressor to use
+		cd_values[6] = BLOSC_LZ4HC; // does better but slower compression. decompression is still very fast.
+		if ((H5Pset_chunk(dataset_property_id, 1, chunk_dims) < 0) || (H5Pset_filter(dataset_property_id, FILTER_BLOSC, H5Z_FLAG_OPTIONAL, 7, cd_values) < 0)) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
+		}
+	} else {
+		if (H5Pset_chunk(dataset_property_id, 1, chunk_dims) < 0) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset properties.");
+		}
+	}
+
+	if ((dataset_id = H5Dcreate(group_id, POPULATIONS_DATASET, populations_entry_type_id, dataspace_id, H5P_DEFAULT, dataset_property_id, H5P_DEFAULT)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataset.");
+	}
+
+	return dataset_id.release();
 }
 
 hid_t HVCF::create_haplotypes_dataset(hid_t group_id, hsize_t variants_chunk_size, hsize_t samples_chunk_size) throw (HVCFWriteException) {
@@ -1230,6 +1288,29 @@ void HVCF::create(const string& name) throw (HVCFWriteException) {
 	datatype_id.close();
 	// END: create and commit compound datatype.
 
+	// BEGIN: create and commit compound datatype.
+	if ((datatype_id = H5Tcreate(H5T_COMPOUND, native_string_datatype_size + 2 * sizeof(hsize_t))) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating compound datatype.");
+	}
+
+	if (H5Tinsert(datatype_id, "name", 0, native_string_datatype_id) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while adding new member to compound datatype.");
+	}
+
+	if (H5Tinsert(datatype_id, "offset_1", native_string_datatype_size, H5T_NATIVE_HSIZE) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while adding new member to compound datatype.");
+	}
+
+	if (H5Tinsert(datatype_id, "offset_2", native_string_datatype_size + sizeof(hsize_t), H5T_NATIVE_HSIZE) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while adding new member to compound datatype.");
+	}
+
+	if	(H5Tcommit(file_id, POPULATIONS_ENTRY_TYPE, datatype_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while committing compound datatype.");
+	}
+	datatype_id.close();
+	// END: create and commit compound datatype.
+
 	if ((samples_group_id = H5Gcreate(file_id, SAMPLES_GROUP, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating group.");
 	}
@@ -1240,14 +1321,15 @@ void HVCF::create(const string& name) throw (HVCFWriteException) {
 }
 
 void HVCF::set_samples(const vector<string>& samples) throw (HVCFWriteException) {
-	HDF5DatasetIdentifier samples_all_dataset_id;
+	HDF5DatasetIdentifier dataset_id;
 	HDF5DataspaceIdentifier file_dataspace_id;
 	HDF5DataspaceIdentifier memory_dataspace_id;
 	HDF5DatatypeIdentifier native_string_datatype_id;
+	HDF5DatatypeIdentifier populations_entry_memory_datatype_id;
 
 	hsize_t mem_dims[1]{samples.size()};
-	hsize_t file_dims[1]{0};
 	hsize_t file_offset[1]{0};
+	hsize_t file_dims[1]{samples.size()};
 	const char* buffer[samples.size()];
 
 	for (unsigned int i = 0u; i < samples.size(); ++i) {
@@ -1258,11 +1340,136 @@ void HVCF::set_samples(const vector<string>& samples) throw (HVCFWriteException)
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while opening datatype.");
 	}
 
-	if ((samples_all_dataset_id = create_strings_1D_dataset(SAMPLES_ALL_DATASET, samples_group_id, 1000)) < 0) {
+	if ((dataset_id = create_sample_names_dataset(samples_group_id, 1000)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataset.");
 	}
 
-	if ((file_dataspace_id = H5Dget_space(samples_all_dataset_id)) < 0) {
+	if (H5Dset_extent(dataset_id, file_dims) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset dimensions.");
+	}
+
+	if ((file_dataspace_id = H5Dget_space(dataset_id)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while getting dataspace.");
+	}
+
+	if ((memory_dataspace_id = H5Screate_simple(1, mem_dims, nullptr)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating memory dataspace.");
+	}
+
+	if (H5Sselect_hyperslab(file_dataspace_id, H5S_SELECT_SET, file_offset, nullptr, mem_dims, nullptr) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while making selection in dataspace.");
+	}
+
+	if (H5Dwrite(dataset_id, native_string_datatype_id, memory_dataspace_id, file_dataspace_id, H5P_DEFAULT, buffer) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while writing to dataset.");
+	}
+
+	dataset_id.close();
+	memory_dataspace_id.close();
+	file_dataspace_id.close();
+
+	mem_dims[0] = 1;
+	file_offset[0] = 0;
+	file_dims[0] = 1;
+	populations_entry_type populations_entry;
+
+	populations_entry.name = const_cast<char*>("ALL");
+	populations_entry.offset_1 = 0;
+	populations_entry.offset_2 = samples.size() - 1;
+
+	try {
+		populations_entry_memory_datatype_id  = create_populations_entry_memory_datatype();
+	} catch (HVCFCreateException &e) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating memory datatype.");
+	}
+
+	if ((dataset_id = create_populations_dataset(samples_group_id, 5000)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataset.");
+	}
+
+	if (H5Dset_extent(dataset_id, file_dims) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset dimensions.");
+	}
+
+	if ((file_dataspace_id = H5Dget_space(dataset_id)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while getting dataspace.");
+	}
+
+	if ((memory_dataspace_id = H5Screate_simple(1, mem_dims, nullptr)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating memory dataspace.");
+	}
+
+	if (H5Sselect_hyperslab(file_dataspace_id, H5S_SELECT_SET, file_offset, nullptr, mem_dims, nullptr) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while making selection in dataspace.");
+	}
+
+	if (H5Dwrite(dataset_id, populations_entry_memory_datatype_id, memory_dataspace_id, file_dataspace_id, H5P_DEFAULT, &populations_entry) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while writing to dataset.");
+	}
+}
+
+void HVCF::set_population(const string& name, const std::vector<string>& samples) throw (HVCFWriteException) {
+	HDF5DatasetIdentifier dataset_id;
+	HDF5DataspaceIdentifier file_dataspace_id;
+	HDF5DataspaceIdentifier memory_dataspace_id;
+	HDF5DatatypeIdentifier populations_entry_memory_datatype_id;
+
+	map<string, unsigned int> all_samples;
+	auto all_samples_it = all_samples.end();
+
+	hsize_t offests_buffer[samples.size()];
+	vector<tuple<hsize_t, hsize_t>> squeezed_offsets;
+
+	for (auto&& sample : get_samples()) {
+		all_samples.emplace(std::move(sample), all_samples.size());
+	}
+
+	for (unsigned int i = 0u; i < samples.size(); ++i) {
+		all_samples_it = all_samples.find(samples[i]);
+		if (all_samples_it == all_samples.end()) {
+			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Sample not found.");
+		}
+		offests_buffer[i] = static_cast<hsize_t>(all_samples_it->second);
+	}
+
+	std::sort(offests_buffer, offests_buffer + samples.size(), std::less_equal<hsize_t>());
+
+	hsize_t start = offests_buffer[0];
+	hsize_t end = offests_buffer[0];
+	for (unsigned int i = 1; i < samples.size(); ++i) {
+		if (offests_buffer[i] - offests_buffer[i - 1] > 1) {
+			squeezed_offsets.emplace_back(start, end);
+			start = offests_buffer[i];
+			end = offests_buffer[i];
+		} else {
+			end = offests_buffer[i];
+		}
+	}
+	squeezed_offsets.emplace_back(start, end);
+
+	hsize_t mem_dims[1]{squeezed_offsets.size()};
+	hsize_t file_dims[1]{0};
+	hsize_t file_offset[1]{0};
+
+
+	populations_entry_type populations_entry_buffer[squeezed_offsets.size()];
+	for (unsigned int i = 0; i < squeezed_offsets.size(); ++i) {
+		populations_entry_buffer[i].name = const_cast<char*>(name.c_str());
+		populations_entry_buffer[i].offset_1 = get<0>(squeezed_offsets[i]);
+		populations_entry_buffer[i].offset_2 = get<1>(squeezed_offsets[i]);
+	}
+
+	try {
+		populations_entry_memory_datatype_id  = create_populations_entry_memory_datatype();
+	} catch (HVCFCreateException &e) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating memory datatype.");
+	}
+
+	if ((dataset_id = H5Dopen(samples_group_id, POPULATIONS_DATASET, H5P_DEFAULT)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating dataset.");
+	}
+
+	if ((file_dataspace_id = H5Dget_space(dataset_id)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while getting dataspace.");
 	}
 
@@ -1275,11 +1482,11 @@ void HVCF::set_samples(const vector<string>& samples) throw (HVCFWriteException)
 	file_offset[0] = file_dims[0];
 	file_dims[0] += mem_dims[0];
 
-	if (H5Dset_extent(samples_all_dataset_id, file_dims) < 0) {
+	if (H5Dset_extent(dataset_id, file_dims) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset dimensions.");
 	}
 
-	if ((file_dataspace_id = H5Dget_space(samples_all_dataset_id)) < 0) {
+	if ((file_dataspace_id = H5Dget_space(dataset_id)) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while getting dataspace.");
 	}
 
@@ -1291,59 +1498,32 @@ void HVCF::set_samples(const vector<string>& samples) throw (HVCFWriteException)
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while making selection in dataspace.");
 	}
 
-	if (H5Dwrite(samples_all_dataset_id, native_string_datatype_id, memory_dataspace_id, file_dataspace_id, H5P_DEFAULT, buffer) < 0) {
+	if (H5Dwrite(dataset_id, populations_entry_memory_datatype_id, memory_dataspace_id, file_dataspace_id, H5P_DEFAULT, populations_entry_buffer) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while writing to dataset.");
 	}
-}
 
-void HVCF::set_population(const string& name, const std::vector<string>& samples) throw (HVCFWriteException) {
-	HDF5DatasetIdentifier population_dataset_id;
-	HDF5DataspaceIdentifier file_dataspace_id;
-	HDF5DataspaceIdentifier memory_dataspace_id;
 
-	map<string, unsigned int> all_samples;
-	auto all_samples_it = all_samples.end();
-	hsize_t buffer[samples.size()];
+//	population_dataset_id = create_hsize_1D_dataset(name, samples_group_id, 100);
 
-	hsize_t mem_dims[1]{samples.size()};
-	hsize_t file_dims[1]{samples.size()};
-	hsize_t file_offset[1]{0};
-
-	for (auto&& sample : get_samples()) {
-		all_samples.emplace(std::move(sample), all_samples.size());
-	}
-
-	for (unsigned int i = 0u; i < samples.size(); ++i) {
-		all_samples_it = all_samples.find(samples[i]);
-		if (all_samples_it == all_samples.end()) {
-			throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Sample not found.");
-		}
-		buffer[i] = static_cast<hsize_t>(all_samples_it->second);
-	}
-
-	std::sort(buffer, buffer + samples.size(), std::less_equal<unsigned int>());
-
-	population_dataset_id = create_hsize_1D_dataset(name, samples_group_id, 100);
-
-	if (H5Dset_extent(population_dataset_id, file_dims) < 0) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset dimensions.");
-	}
-
-	if ((file_dataspace_id = H5Dget_space(population_dataset_id)) < 0) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while getting dataspace.");
-	}
-
-	if ((memory_dataspace_id = H5Screate_simple(1, mem_dims, nullptr)) < 0) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating memory dataspace.");
-	}
-
-	if (H5Sselect_hyperslab(file_dataspace_id, H5S_SELECT_SET, file_offset, nullptr, mem_dims, nullptr) < 0) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while making selection in dataspace.");
-	}
-
-	if (H5Dwrite(population_dataset_id, H5T_NATIVE_HSIZE, memory_dataspace_id, file_dataspace_id, H5P_DEFAULT, buffer) < 0) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while writing to dataset.");
-	}
+//	if (H5Dset_extent(population_dataset_id, file_dims) < 0) {
+//		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting dataset dimensions.");
+//	}
+//
+//	if ((file_dataspace_id = H5Dget_space(population_dataset_id)) < 0) {
+//		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while getting dataspace.");
+//	}
+//
+//	if ((memory_dataspace_id = H5Screate_simple(1, mem_dims, nullptr)) < 0) {
+//		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating memory dataspace.");
+//	}
+//
+//	if (H5Sselect_hyperslab(file_dataspace_id, H5S_SELECT_SET, file_offset, nullptr, mem_dims, nullptr) < 0) {
+//		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while making selection in dataspace.");
+//	}
+//
+//	if (H5Dwrite(population_dataset_id, H5T_NATIVE_HSIZE, memory_dataspace_id, file_dataspace_id, H5P_DEFAULT, buffer) < 0) {
+//		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while writing to dataset.");
+//	}
 }
 
 void HVCF::write_variant(const Variant& variant) throw (HVCFWriteException) {
@@ -1397,7 +1577,7 @@ hsize_t HVCF::get_n_samples() throw (HVCFReadException) {
 	HDF5DataspaceIdentifier file_dataspace_id;
 	hsize_t file_dims[1]{0};
 
-	if ((samples_all_dataset_id = H5Dopen(samples_group_id, SAMPLES_ALL_DATASET, H5P_DEFAULT)) < 0) {
+	if ((samples_all_dataset_id = H5Dopen(samples_group_id, SAMPLE_NAMES_DATASET, H5P_DEFAULT)) < 0) {
 		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while opening dataset.");
 	}
 
@@ -1422,7 +1602,7 @@ vector<string> HVCF::get_samples() throw (HVCFReadException) {
 		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while opening datatype.");
 	}
 
-	if ((samples_all_dataset_id = H5Dopen(samples_group_id, SAMPLES_ALL_DATASET, H5P_DEFAULT)) < 0) {
+	if ((samples_all_dataset_id = H5Dopen(samples_group_id, SAMPLE_NAMES_DATASET, H5P_DEFAULT)) < 0) {
 		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while opening dataset.");
 	}
 
@@ -1498,7 +1678,7 @@ vector<string> HVCF::get_population(const string& name) throw (HVCFReadException
 
 	dataset_id.close();
 
-	if ((samples_all_dataset_id = H5Dopen(samples_group_id, SAMPLES_ALL_DATASET, H5P_DEFAULT)) < 0) {
+	if ((samples_all_dataset_id = H5Dopen(samples_group_id, SAMPLE_NAMES_DATASET, H5P_DEFAULT)) < 0) {
 		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while opening dataset.");
 	}
 
@@ -2467,6 +2647,9 @@ void HVCF::chunk_read_test(const string& chromosome, unsigned long long int star
 }
 
 void HVCF::chunk_read_test2() throw (HVCFReadException) {
+	std::chrono::time_point<std::chrono::system_clock> start, end;
+	std::chrono::duration<double> elapsed_seconds;
+
 	auto chromosome_it = chromosomes.find("20");
 
 	long long int lead_variant_offset = 9324;
@@ -2476,9 +2659,25 @@ void HVCF::chunk_read_test2() throw (HVCFReadException) {
 //	long long int sample_offset[] {5,6,8};
 
 	vector<tuple<long long int, long long int>> sample_offsets;
-	sample_offsets.emplace_back(5, 6);
-	sample_offsets.emplace_back(8, 8);
 
+//	sample_offsets.emplace_back(5, 6);
+//	sample_offsets.emplace_back(8, 8);
+
+	sample_offsets.emplace_back(0, 184);
+	sample_offsets.emplace_back(432, 432);
+	sample_offsets.emplace_back(501, 524);
+	sample_offsets.emplace_back(544, 616);
+	sample_offsets.emplace_back(837, 850);
+	sample_offsets.emplace_back(1656, 1754);
+	sample_offsets.emplace_back(2294, 2400);
+
+//	[0, 184] - 185
+//	[432, 432] - 1
+//	[501, 524] - 24
+//	[544, 616] - 73
+//	[837, 850] - 14
+//	[1656, 1754] - 99
+//	[2294, 2400] -- 107
 
 //	long long int haplotype_offsets[] {10,11,12,13,16,17};
 
@@ -2486,7 +2685,11 @@ void HVCF::chunk_read_test2() throw (HVCFReadException) {
 	HDF5DataspaceIdentifier file_dataspace_id;
 	HDF5DataspaceIdentifier memory_dataspace_id;
 
-	hsize_t n_samples = 3;
+	hsize_t n_samples = 0;
+	for (auto&& range : sample_offsets) {
+		n_samples += get<1>(range) - get<0>(range) + 1;
+	}
+
 	hsize_t n_haplotypes = 2 * n_samples;
 	long long int n_variants = end_position_offset - start_position_offset + 1 + 1;
 
@@ -2530,6 +2733,7 @@ void HVCF::chunk_read_test2() throw (HVCFReadException) {
 		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while making selection in dataspace.");
 	}
 
+	start = std::chrono::system_clock::now();
 	for (unsigned int i = 0; i < sample_offsets.size(); ++i) {
 		file_offset1_2D[1] = 2 * get<0>(sample_offsets[i]);
 		counts1_2D[1] = 2 * (get<1>(sample_offsets[i]) - get<0>(sample_offsets[i]) + 1);
@@ -2545,6 +2749,9 @@ void HVCF::chunk_read_test2() throw (HVCFReadException) {
 			throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while making selection in dataspace.");
 		}
 	}
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	cout << "Selection done in = " << elapsed_seconds.count() << " sec" << endl;
 
 //	for (unsigned int i = 0; i < n_samples; ++i) {
 //		file_offset1_2D[1] = 2 * sample_offset[i];
@@ -2561,17 +2768,21 @@ void HVCF::chunk_read_test2() throw (HVCFReadException) {
 //		}
 //	}
 
+	start = std::chrono::system_clock::now();
 	if (H5Dread(dataset_id, H5T_NATIVE_UCHAR, memory_dataspace_id, file_dataspace_id, H5P_DEFAULT, haplotypes.get()) < 0) {
 		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while reading from dataset");
 	}
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	cout << "Read done in = " << elapsed_seconds.count() << " sec" << endl;
 
-	for (long long int i = 0; i < n_variants; ++i) {
-		cout << (start_position_offset + i) << "=";
-		for (hsize_t j = 0; j < n_haplotypes; ++j) {
-			cout << ((int)haplotypes[i * n_haplotypes + j]);
-		}
-		cout << endl;
-	}
+//	for (long long int i = 0; i < n_variants; ++i) {
+//		cout << (start_position_offset + i) << "=";
+//		for (hsize_t j = 0; j < n_haplotypes; ++j) {
+//			cout << ((int)haplotypes[i * n_haplotypes + j]);
+//		}
+//		cout << endl;
+//	}
 
 }
 
