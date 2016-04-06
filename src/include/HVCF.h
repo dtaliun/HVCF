@@ -104,6 +104,11 @@ private:
 	void write_variants(hid_t group_id, const variants_entry_type* buffer, unsigned int n_variants) throw (HVCFWriteException);
 
 	void create_indices(hid_t chromosome_group_id) throw (HVCFWriteException);
+	void create_indices() throw (HVCFWriteException);
+
+	void write_samples(const vector<string>& samples) throw (HVCFWriteException);
+	void write_variant(const Variant& variant) throw (HVCFWriteException);
+	void flush_write_buffer() throw (HVCFWriteException);
 
 public:
 	HVCF();
@@ -111,16 +116,12 @@ public:
 	virtual ~HVCF() noexcept;
 
 	void create(const string& name) throw (HVCFWriteException);
-
-	void set_samples(const vector<string>& samples) throw (HVCFWriteException);
-	void create_sample_subset(const string& name, const vector<string>& samples) throw (HVCFWriteException);
-
-	void write_variant(const Variant& variant) throw (HVCFWriteException);
-	void flush_write_buffer() throw (HVCFWriteException);
-	void create_indices() throw (HVCFWriteException);
-
 	void open(const string& name) throw (HVCFOpenException);
 	void close() throw (HVCFCloseException);
+
+	void import_vcf(const string& name) throw (HVCFWriteException);
+
+	void create_sample_subset(const string& name, const vector<string>& samples) throw (HVCFWriteException);
 
 	hsize_t get_n_samples() throw (HVCFReadException);
 	vector<string> get_samples() throw (HVCFReadException);
@@ -128,7 +129,6 @@ public:
 	vector<string> get_sample_subsets() throw (HVCFReadException);
 	unsigned int get_n_samples_in_subset(const string& name) throw (HVCFReadException);
 	vector<string> get_samples_in_subset(const string& name) throw (HVCFReadException);
-
 	hsize_t get_n_variants() throw (HVCFReadException);
 	hsize_t get_n_variants_in_chromosome(const string& chromosome) throw (HVCFReadException);
 

@@ -1147,6 +1147,33 @@ void HVCF::create_indices(hid_t chromosome_group_id) throw (HVCFWriteException) 
 	// END: write indices on disk.
 }
 
+void HVCF::write_variant(const Variant& variant) throw (HVCFWriteException) {
+	const string& chromosome = variant.get_chrom().get_value();
+	auto chromosomes_it = chromosomes.end();
+	auto buffers_it = write_buffers.end();
+
+	if (variant.get_alt().get_values().size() != 1) { // Support only bi-allelic (for computing LD it is file, but must be extended).
+		return;
+	}
+
+	if (chromosomes.count(chromosome) == 0) {
+		chromosomes_it = chromosomes.emplace(chromosome, std::move(unique_ptr<HDF5GroupIdentifier>(new HDF5GroupIdentifier()))).first;
+		buffers_it = write_buffers.emplace(chromosome, std::move(unique_ptr<WriteBuffer>(new WriteBuffer(100000, get_n_samples())))).first;
+		chromosomes_it->second->set(create_chromosome_group(chromosome));
+	} else {
+		chromosomes_it = chromosomes.find(chromosome);
+		buffers_it = write_buffers.find(chromosome);
+	}
+
+	if (buffers_it->second->is_full()) {
+		write_haplotypes(chromosomes_it->second->get(), buffers_it->second->get_haplotypes_buffer(), buffers_it->second->get_n_variants(), buffers_it->second->get_n_haplotypes());
+		write_variants(chromosomes_it->second->get(), buffers_it->second->get_variants_buffer(), buffers_it->second->get_n_variants());
+		buffers_it->second->reset();
+	}
+
+	buffers_it->second->add_variant(variant);
+}
+
 void HVCF::create(const string& name) throw (HVCFWriteException) {
 	HDF5DatatypeIdentifier datatype_id;
 	HDF5DatatypeIdentifier native_string_datatype_id;
@@ -1320,7 +1347,129 @@ void HVCF::create(const string& name) throw (HVCFWriteException) {
 	}
 }
 
-void HVCF::set_samples(const vector<string>& samples) throw (HVCFWriteException) {
+void HVCF::open(const string& name) throw (HVCFOpenException) {
+	this->name = name;
+
+	H5AC_cache_config_t config;
+	config.version = H5AC__CURR_CACHE_CONFIG_VERSION;
+
+	HDF5PropertyIdentifier file_access_property_id;
+	file_access_property_id = H5Pcreate(H5P_FILE_ACCESS);
+
+	if (file_access_property_id < 0) {
+		cout << "blia!" << endl;
+	}
+	if (H5Pget_mdc_config(file_access_property_id, &config) < 0) {
+		cout << "blia2!" << endl;
+	}
+
+
+	config.incr_mode = H5C_cache_incr_mode::H5C_incr__off;
+	config.decr_mode = H5C_cache_decr_mode::H5C_decr__off;
+	config.set_initial_size = true;
+	config.initial_size = 32 * 1024 * 1024;
+
+
+	if (H5Pset_mdc_config(file_access_property_id, &config) < 0) {
+		cout << "blia!" << endl;
+	}
+
+	if (H5Pset_cache(file_access_property_id, 0, 1000, 16 * 1024 * 1024, 0.75) < 0) {
+		cout << "blia!" << endl;
+	}
+
+	if ((file_id = H5Fopen(this->name.c_str(), H5F_ACC_RDONLY, file_access_property_id)) < 0) {
+		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while opening file.");
+	}
+
+	HDF5PropertyIdentifier file_access_property_id2;
+	file_access_property_id2 = H5Fget_access_plist(file_id);
+	H5AC_cache_config_t cache_config;
+	cache_config.version = H5AC__CURR_CACHE_CONFIG_VERSION;
+	if (H5Pget_mdc_config(file_access_property_id2, &cache_config) < 0) {
+		cout << "blia3!" << endl;
+	}
+	cout << "Opened file configuration:" << endl;
+	cout << "\tInitital size: " << cache_config.initial_size << endl;
+
+	if ((samples_group_id = H5Gopen(file_id, SAMPLES_GROUP, H5P_DEFAULT)) < 0) {
+		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while opening group.");
+	}
+
+	if ((chromosomes_group_id = H5Gopen(file_id, CHROMOSOMES_GROUP, H5P_DEFAULT)) < 0) {
+		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while opening group.");
+	}
+
+	H5G_info_t chromosomes_group_info;
+	H5O_info_t object_info;
+	hsize_t object_name_length = 0;
+	unique_ptr<char[]> object_name = nullptr;
+	auto chromosomes_it = chromosomes.end();
+
+	if (H5Gget_info(chromosomes_group_id, &chromosomes_group_info) < 0) {
+		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while getting group information.");
+	}
+
+	for (hsize_t i = 0; i < chromosomes_group_info.nlinks; ++i) {
+		if (H5Oget_info_by_idx(chromosomes_group_id, ".", H5_INDEX_NAME, H5_ITER_INC, i, &object_info, 0) < 0) {
+			throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while getting object information.");
+		}
+
+		if (object_info.type != H5O_type_t::H5O_TYPE_GROUP) {
+			continue;
+		}
+
+		object_name_length = H5Lget_name_by_idx(chromosomes_group_id, ".", H5_INDEX_NAME, H5_ITER_INC, i, NULL, 0, H5P_DEFAULT);
+		if (object_name_length < 0) {
+			throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while getting group name size.");
+		}
+
+		object_name = unique_ptr<char[]>(new char[object_name_length + 1]{});
+
+		if (H5Lget_name_by_idx(chromosomes_group_id, ".", H5_INDEX_NAME, H5_ITER_INC, i, object_name.get(), object_name_length + 1, H5P_DEFAULT) < 0) {
+			throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while getting group name.");
+		}
+
+		chromosomes_it = chromosomes.emplace(object_name.get(), std::move(unique_ptr<HDF5GroupIdentifier>(new HDF5GroupIdentifier()))).first;
+		chromosomes_it->second->set(H5Gopen(chromosomes_group_id, chromosomes_it->first.c_str(), H5P_DEFAULT));
+		if (chromosomes_it->second->get() < 0) {
+			throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while opening group.");
+		}
+	}
+}
+
+void HVCF::close() throw (HVCFCloseException) {
+	for (auto&& entry : chromosomes) {
+		entry.second->close();
+	}
+
+	chromosomes_group_id.close();
+	samples_group_id.close();
+	file_id.close();
+	name.clear();
+}
+
+void HVCF::import_vcf(const string& name) throw (HVCFWriteException) {
+	VCFReader vcf;
+
+	try {
+		vcf.open(name);
+		write_samples(std::move(vcf.get_variant().get_samples()));
+		while (vcf.read_next_variant()) {
+			write_variant(vcf.get_variant());
+		}
+		flush_write_buffer();
+		vcf.close();
+	} catch (ReaderException &e) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while reading VCF file.");
+	} catch (VCFException &e) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while reading VCF file.");
+	}
+
+	create_indices();
+}
+
+void HVCF::write_samples(const vector<string>& samples) throw (HVCFWriteException) {
 	HDF5DatasetIdentifier dataset_id;
 	HDF5DataspaceIdentifier file_dataspace_id;
 	HDF5DataspaceIdentifier memory_dataspace_id;
@@ -1501,33 +1650,6 @@ void HVCF::create_sample_subset(const string& name, const std::vector<string>& s
 	if (H5Dwrite(dataset_id, subsets_entry_memory_datatype_id, memory_dataspace_id, file_dataspace_id, H5P_DEFAULT, populations_entry_buffer) < 0) {
 		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while writing to dataset.");
 	}
-}
-
-void HVCF::write_variant(const Variant& variant) throw (HVCFWriteException) {
-	const string& chromosome = variant.get_chrom().get_value();
-	auto chromosomes_it = chromosomes.end();
-	auto buffers_it = write_buffers.end();
-
-	if (variant.get_alt().get_values().size() != 1) { // Support only bi-allelic (for computing LD it is file, but must be extended).
-		return;
-	}
-
-	if (chromosomes.count(chromosome) == 0) {
-		chromosomes_it = chromosomes.emplace(chromosome, std::move(unique_ptr<HDF5GroupIdentifier>(new HDF5GroupIdentifier()))).first;
-		buffers_it = write_buffers.emplace(chromosome, std::move(unique_ptr<WriteBuffer>(new WriteBuffer(100000, get_n_samples())))).first;
-		chromosomes_it->second->set(create_chromosome_group(chromosome));
-	} else {
-		chromosomes_it = chromosomes.find(chromosome);
-		buffers_it = write_buffers.find(chromosome);
-	}
-
-	if (buffers_it->second->is_full()) {
-		write_haplotypes(chromosomes_it->second->get(), buffers_it->second->get_haplotypes_buffer(), buffers_it->second->get_n_variants(), buffers_it->second->get_n_haplotypes());
-		write_variants(chromosomes_it->second->get(), buffers_it->second->get_variants_buffer(), buffers_it->second->get_n_variants());
-		buffers_it->second->reset();
-	}
-
-	buffers_it->second->add_variant(variant);
 }
 
 void HVCF::flush_write_buffer() throw (HVCFWriteException) {
@@ -1847,108 +1969,6 @@ vector<string> HVCF::get_samples_in_subset(const string& name) throw (HVCFReadEx
 	}
 
 	return samples;
-}
-
-void HVCF::open(const string& name) throw (HVCFOpenException) {
-	this->name = name;
-
-	H5AC_cache_config_t config;
-	config.version = H5AC__CURR_CACHE_CONFIG_VERSION;
-
-	HDF5PropertyIdentifier file_access_property_id;
-	file_access_property_id = H5Pcreate(H5P_FILE_ACCESS);
-
-	if (file_access_property_id < 0) {
-		cout << "blia!" << endl;
-	}
-	if (H5Pget_mdc_config(file_access_property_id, &config) < 0) {
-		cout << "blia2!" << endl;
-	}
-
-
-	config.incr_mode = H5C_cache_incr_mode::H5C_incr__off;
-	config.decr_mode = H5C_cache_decr_mode::H5C_decr__off;
-	config.set_initial_size = true;
-	config.initial_size = 32 * 1024 * 1024;
-
-
-	if (H5Pset_mdc_config(file_access_property_id, &config) < 0) {
-		cout << "blia!" << endl;
-	}
-
-	if (H5Pset_cache(file_access_property_id, 0, 1000, 16 * 1024 * 1024, 0.75) < 0) {
-		cout << "blia!" << endl;
-	}
-
-	if ((file_id = H5Fopen(this->name.c_str(), H5F_ACC_RDONLY, file_access_property_id)) < 0) {
-		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while opening file.");
-	}
-
-	HDF5PropertyIdentifier file_access_property_id2;
-	file_access_property_id2 = H5Fget_access_plist(file_id);
-	H5AC_cache_config_t cache_config;
-	cache_config.version = H5AC__CURR_CACHE_CONFIG_VERSION;
-	if (H5Pget_mdc_config(file_access_property_id2, &cache_config) < 0) {
-		cout << "blia3!" << endl;
-	}
-	cout << "Opened file configuration:" << endl;
-	cout << "\tInitital size: " << cache_config.initial_size << endl;
-
-	if ((samples_group_id = H5Gopen(file_id, SAMPLES_GROUP, H5P_DEFAULT)) < 0) {
-		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while opening group.");
-	}
-
-	if ((chromosomes_group_id = H5Gopen(file_id, CHROMOSOMES_GROUP, H5P_DEFAULT)) < 0) {
-		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while opening group.");
-	}
-
-	H5G_info_t chromosomes_group_info;
-	H5O_info_t object_info;
-	hsize_t object_name_length = 0;
-	unique_ptr<char[]> object_name = nullptr;
-	auto chromosomes_it = chromosomes.end();
-
-	if (H5Gget_info(chromosomes_group_id, &chromosomes_group_info) < 0) {
-		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while getting group information.");
-	}
-
-	for (hsize_t i = 0; i < chromosomes_group_info.nlinks; ++i) {
-		if (H5Oget_info_by_idx(chromosomes_group_id, ".", H5_INDEX_NAME, H5_ITER_INC, i, &object_info, 0) < 0) {
-			throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while getting object information.");
-		}
-
-		if (object_info.type != H5O_type_t::H5O_TYPE_GROUP) {
-			continue;
-		}
-
-		object_name_length = H5Lget_name_by_idx(chromosomes_group_id, ".", H5_INDEX_NAME, H5_ITER_INC, i, NULL, 0, H5P_DEFAULT);
-		if (object_name_length < 0) {
-			throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while getting group name size.");
-		}
-
-		object_name = unique_ptr<char[]>(new char[object_name_length + 1]{});
-
-		if (H5Lget_name_by_idx(chromosomes_group_id, ".", H5_INDEX_NAME, H5_ITER_INC, i, object_name.get(), object_name_length + 1, H5P_DEFAULT) < 0) {
-			throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while getting group name.");
-		}
-
-		chromosomes_it = chromosomes.emplace(object_name.get(), std::move(unique_ptr<HDF5GroupIdentifier>(new HDF5GroupIdentifier()))).first;
-		chromosomes_it->second->set(H5Gopen(chromosomes_group_id, chromosomes_it->first.c_str(), H5P_DEFAULT));
-		if (chromosomes_it->second->get() < 0) {
-			throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while opening group.");
-		}
-	}
-}
-
-void HVCF::close() throw (HVCFCloseException) {
-	for (auto&& entry : chromosomes) {
-		entry.second->close();
-	}
-
-	chromosomes_group_id.close();
-	samples_group_id.close();
-	file_id.close();
-	name.clear();
 }
 
 hsize_t HVCF::get_n_variants() throw (HVCFReadException) {
