@@ -78,7 +78,7 @@ TEST_F(HVCFTestReadWrite, DISABLED_Create) {
 		hvcf.set_samples(in_samples);
 		ASSERT_EQ(3u, hvcf.get_n_opened_objects());
 		ASSERT_EQ(3u, sph_umich_edu::HVCF::get_n_all_opened_objects());
-		hvcf.set_population("", in_pop1_samples);
+		hvcf.create_sample_subset("", in_pop1_samples);
 	} catch (sph_umich_edu::HVCFWriteException &e) {
 		exception = true;
 	}
@@ -95,7 +95,7 @@ TEST_F(HVCFTestReadWrite, DISABLED_Create) {
 	hvcf.set_samples(in_samples);
 	ASSERT_EQ(5u, hvcf.get_n_samples());
 	ASSERT_EQ(3u, hvcf.get_n_opened_objects());
-	hvcf.set_population("POP1", in_pop1_samples);
+	hvcf.create_sample_subset("POP1", in_pop1_samples);
 	ASSERT_EQ(3u, hvcf.get_n_opened_objects());
 	hvcf.close();
 	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
@@ -106,7 +106,7 @@ TEST_F(HVCFTestReadWrite, DISABLED_Create) {
 	ASSERT_EQ(3u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 	vector<string> out_samples = std::move(hvcf.get_samples());
 	ASSERT_EQ(3u, hvcf.get_n_opened_objects());
-	vector<string> out_pop1_samples_ordered = std::move(hvcf.get_population("POP1"));
+	vector<string> out_pop1_samples_ordered = std::move(hvcf.get_samples_in_subset("POP1"));
 	ASSERT_EQ(3u, hvcf.get_n_opened_objects());
 	hvcf.close();
 	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
@@ -214,14 +214,28 @@ TEST_F(HVCFTestReadWrite, WriteVCF) {
 		hvcf.create_indices();
 		ASSERT_EQ(6u, hvcf.get_n_opened_objects());
 
-		cout << "a1" << endl;
-
 		for (auto&& population : populations) {
-			hvcf.set_population(population.first, population.second);
+			hvcf.create_sample_subset(population.first, population.second);
 			ASSERT_EQ(6u, hvcf.get_n_opened_objects());
 		}
 
-		cout << "a2" << endl;
+		auto populations_it = populations.end();
+		vector<string> hvcf_populations = std::move(hvcf.get_sample_subsets());
+		ASSERT_EQ(populations.size() + 1, hvcf_populations.size());
+		for (auto&& hvcf_population : hvcf_populations) {
+			if (hvcf_population.compare("ALL") != 0) {
+				populations_it = populations.find(hvcf_population);
+				ASSERT_TRUE(populations_it != populations.end());
+				ASSERT_EQ(populations_it->second.size(), hvcf.get_n_samples_in_subset(hvcf_population));
+				vector<string> hvcf_samples = std::move(hvcf.get_samples_in_subset(hvcf_population));
+				set<string> hvcf_samples_ordered(hvcf_samples.begin(), hvcf_samples.end());
+				for (auto&& sample : populations_it->second) {
+					ASSERT_EQ(1u, hvcf_samples_ordered.count(sample));
+				}
+			} else {
+				ASSERT_EQ(2504u, hvcf.get_n_samples_in_subset(hvcf_population));
+			}
+		}
 
 		ASSERT_EQ(6u, hvcf.get_n_opened_objects());
 		ASSERT_EQ(6u, sph_umich_edu::HVCF::get_n_all_opened_objects());

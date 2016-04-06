@@ -41,7 +41,7 @@ typedef struct {
 	char* name;
 	hsize_t offset_1;
 	hsize_t offset_2;
-} populations_entry_type;
+} subsets_entry_type;
 
 typedef struct VariantsPair{
 	string name1;
