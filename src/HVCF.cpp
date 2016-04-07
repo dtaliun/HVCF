@@ -36,6 +36,12 @@ HVCF::HVCF(const HVCFConfiguration& configuration) {
 	SAMPLES_CHUNK_SIZE = configuration.samples_chunk_size;
 	COMPRESSION = configuration.compression;
 	COMPRESSION_LEVEL = configuration.compression_level;
+	METADATA_CACHE_INITIAL_SIZE = configuration.metadata_cache_initial_size;
+	METADATA_CACHE_MIN_SIZE = configuration.metadata_cache_min_size;
+	METADATA_CACHE_MAX_SIZE = configuration.metadata_cache_max_size;
+	SIEVE_BUFFER_MAX_SIZE = configuration.sieve_buffer_max_size;
+	CHUNK_CACHE_N_SLOTS = configuration.chunk_cache_n_slots;
+	CHUNK_CACHE_SIZE = configuration.chunk_cache_size;
 
 //  Register Blosc
 	if (strcmp(COMPRESSION, HVCFConfiguration::BLOSC_LZ4HC_COMPRESSION) == 0) {
@@ -1343,9 +1349,54 @@ void HVCF::create(const string& name) throw (HVCFWriteException) {
 
 	this->name = name;
 
-	if ((file_id = H5Fcreate(this->name.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating file.");
+	HDF5PropertyIdentifier file_access_property_id;
+
+	if ((file_access_property_id = H5Pcreate(H5P_FILE_ACCESS)) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while creating file access property.");
 	}
+
+	H5AC_cache_config_t config;
+	config.version = H5AC__CURR_CACHE_CONFIG_VERSION;
+	if (H5Pget_mdc_config(file_access_property_id, &config) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while getting metadata cache configuration.");
+	}
+
+	config.set_initial_size = true;
+	config.initial_size = METADATA_CACHE_INITIAL_SIZE;
+	config.min_size = METADATA_CACHE_MIN_SIZE;
+	config.max_size = METADATA_CACHE_MAX_SIZE;
+
+	if (H5Pset_mdc_config(file_access_property_id, &config) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting metadata cache configuration.");
+	}
+
+	if (H5Pset_sieve_buf_size(file_access_property_id, SIEVE_BUFFER_MAX_SIZE) < 0) {
+		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Error while setting sieve buffer size.");
+	}
+
+	if (H5Pset_cache(file_access_property_id, 0, CHUNK_CACHE_N_SLOTS, CHUNK_CACHE_SIZE, 0.75) < 0) {
+		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while setting cache parameters.");
+	}
+
+	if ((file_id = H5Fcreate(this->name.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, file_access_property_id)) < 0) {
+		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while creating file.");
+	}
+
+//	VERBOSE
+//	HDF5PropertyIdentifier file_access_property_id_test;
+//	H5AC_cache_config_t cache_config;
+//	size_t sieve_buffer_size, cache_nslots, cache_nbytes;
+//	double w0;
+//	cache_config.version = H5AC__CURR_CACHE_CONFIG_VERSION;
+//	file_access_property_id_test = H5Fget_access_plist(file_id);
+//	H5Pget_mdc_config(file_access_property_id_test, &cache_config);
+//	H5Pget_sieve_buf_size(file_access_property_id_test, &sieve_buffer_size);
+//	H5Pget_cache(file_access_property_id_test, NULL, &cache_nslots, &cache_nbytes, &w0);
+//	cout << "Created file configuration:" << endl;
+//	cout << "\tInitital size: " << cache_config.initial_size << endl;
+//	cout << "\tSieve buffer size: " << sieve_buffer_size << endl;
+//	cout << "\tCache slots: " << cache_nslots << endl;
+//	cout << "\tCache size: " << cache_nbytes << endl;
 
 	// BEGIN: create and commit variable length string datatype.
 	if (((datatype_id = H5Tcopy(H5T_C_S1)) < 0) || (H5Tset_size(datatype_id, H5T_VARIABLE) < 0)) {
@@ -1512,47 +1563,54 @@ void HVCF::create(const string& name) throw (HVCFWriteException) {
 void HVCF::open(const string& name) throw (HVCFOpenException) {
 	this->name = name;
 
+	HDF5PropertyIdentifier file_access_property_id;
+
+	if ((file_access_property_id = H5Pcreate(H5P_FILE_ACCESS)) < 0) {
+		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while creating file access property.");
+	}
+
 	H5AC_cache_config_t config;
 	config.version = H5AC__CURR_CACHE_CONFIG_VERSION;
-
-	HDF5PropertyIdentifier file_access_property_id;
-	file_access_property_id = H5Pcreate(H5P_FILE_ACCESS);
-
-	if (file_access_property_id < 0) {
-		cout << "blia!" << endl;
-	}
 	if (H5Pget_mdc_config(file_access_property_id, &config) < 0) {
-		cout << "blia2!" << endl;
+		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while getting metadata cache configuration.");
 	}
 
-
-	config.incr_mode = H5C_cache_incr_mode::H5C_incr__off;
-	config.decr_mode = H5C_cache_decr_mode::H5C_decr__off;
 	config.set_initial_size = true;
-	config.initial_size = 32 * 1024 * 1024;
-
+	config.initial_size = METADATA_CACHE_INITIAL_SIZE;
+	config.min_size = METADATA_CACHE_MIN_SIZE;
+	config.max_size = METADATA_CACHE_MAX_SIZE;
 
 	if (H5Pset_mdc_config(file_access_property_id, &config) < 0) {
-		cout << "blia!" << endl;
+		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while setting metadata cache configuration.");
 	}
 
-	if (H5Pset_cache(file_access_property_id, 0, 1000, 16 * 1024 * 1024, 0.75) < 0) {
-		cout << "blia!" << endl;
+	if (H5Pset_sieve_buf_size(file_access_property_id, SIEVE_BUFFER_MAX_SIZE) < 0) {
+		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while setting sieve buffer size.");
+	}
+
+	if (H5Pset_cache(file_access_property_id, 0, CHUNK_CACHE_N_SLOTS, CHUNK_CACHE_SIZE, 0.75) < 0) {
+		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while setting cache parameters.");
 	}
 
 	if ((file_id = H5Fopen(this->name.c_str(), H5F_ACC_RDONLY, file_access_property_id)) < 0) {
 		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while opening file.");
 	}
 
-	HDF5PropertyIdentifier file_access_property_id2;
-	file_access_property_id2 = H5Fget_access_plist(file_id);
-	H5AC_cache_config_t cache_config;
-	cache_config.version = H5AC__CURR_CACHE_CONFIG_VERSION;
-	if (H5Pget_mdc_config(file_access_property_id2, &cache_config) < 0) {
-		cout << "blia3!" << endl;
-	}
-	cout << "Opened file configuration:" << endl;
-	cout << "\tInitital size: " << cache_config.initial_size << endl;
+//	VERBOSE
+//	HDF5PropertyIdentifier file_access_property_id_test;
+//	H5AC_cache_config_t cache_config;
+//	size_t sieve_buffer_size, cache_nslots, cache_nbytes;
+//	double w0;
+//	cache_config.version = H5AC__CURR_CACHE_CONFIG_VERSION;
+//	file_access_property_id_test = H5Fget_access_plist(file_id);
+//	H5Pget_mdc_config(file_access_property_id_test, &cache_config);
+//	H5Pget_sieve_buf_size(file_access_property_id_test, &sieve_buffer_size);
+//	H5Pget_cache(file_access_property_id_test, NULL, &cache_nslots, &cache_nbytes, &w0);
+//	cout << "Created file configuration:" << endl;
+//	cout << "\tInitital size: " << cache_config.initial_size << endl;
+//	cout << "\tSieve buffer size: " << sieve_buffer_size << endl;
+//	cout << "\tCache slots: " << cache_nslots << endl;
+//	cout << "\tCache size: " << cache_nbytes << endl;
 
 	if ((samples_group_id = H5Gopen(file_id, SAMPLES_GROUP, H5P_DEFAULT)) < 0) {
 		throw HVCFOpenException(__FILE__, __FUNCTION__, __LINE__, "Error while opening group.");

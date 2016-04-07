@@ -54,6 +54,12 @@ private:
 	unsigned int SAMPLES_CHUNK_SIZE;
 	const char* COMPRESSION;
 	unsigned int COMPRESSION_LEVEL;
+	size_t METADATA_CACHE_INITIAL_SIZE;
+	size_t METADATA_CACHE_MIN_SIZE;
+	size_t METADATA_CACHE_MAX_SIZE;
+	size_t SIEVE_BUFFER_MAX_SIZE;
+	size_t CHUNK_CACHE_N_SLOTS;
+	size_t CHUNK_CACHE_SIZE;
 
 	static constexpr char CHROMOSOMES_GROUP[] = "chromosomes";
 	static constexpr char SAMPLES_GROUP[] = "samples";

@@ -16,6 +16,12 @@ public:
 	hsize_t samples_chunk_size;
 	const char* compression;
 	unsigned int compression_level;
+	size_t metadata_cache_initial_size;
+	size_t metadata_cache_min_size;
+	size_t metadata_cache_max_size;
+	size_t sieve_buffer_max_size;
+	size_t chunk_cache_n_slots;
+	size_t chunk_cache_size;
 
 	HVCFConfiguration();
 	virtual ~HVCFConfiguration();
