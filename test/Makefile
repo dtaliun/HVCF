@@ -17,7 +17,7 @@ BLOSCLIBS = ../src/blosc/*.o
 BLOSCDIRS = ../src/blosc
 
 CXX = g++
-CXXFLAGS = -std=c++11 -Wall -L/opt/local/lib/ -L$(GTESTLIB) -L$(HDF5LIB) -L$(BLOSCLIB)
+CXXFLAGS = -std=c++11 -Wall -L$(GTESTLIB) -L$(HDF5LIB) -L$(BLOSCLIB)
 LIBS = -lz -lhdf5 -lblosc -larmadillo -lgtest
 INCS = -I$(GTESTINCS) -I$(HDF5INCS) -I$(BLOSCINCS)
 

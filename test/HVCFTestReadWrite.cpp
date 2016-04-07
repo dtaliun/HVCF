@@ -61,7 +61,7 @@ protected:
 	}
 };
 
-TEST_F(HVCFTestReadWrite, DISABLED_ImportVCF_EUR) {
+TEST_F(HVCFTestReadWrite, ImportVCF_EUR) {
 	{ // 'dummy' scope to check if HVCF object closes every opened HDF5 identifier on its destruction
 		sph_umich_edu::HVCF hvcf;
 
@@ -108,7 +108,7 @@ TEST_F(HVCFTestReadWrite, DISABLED_ImportVCF_EUR) {
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTestReadWrite, DISABLED_ImportVCF_ALL) {
+TEST_F(HVCFTestReadWrite, ImportVCF_ALL) {
 	{ // 'dummy' scope to check if HVCF object closes every opened HDF5 identifier on its destruction
 		sph_umich_edu::HVCF hvcf;
 
@@ -167,7 +167,7 @@ TEST_F(HVCFTestReadWrite, DISABLED_ImportVCF_ALL) {
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTestReadWrite, DISABLED_VariantLookupByPosition) {
+TEST_F(HVCFTestReadWrite, VariantLookupByPosition) {
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	std::chrono::duration<double> elapsed_seconds;
 	sph_umich_edu::HVCF hvcf;
@@ -363,7 +363,7 @@ TEST_F(HVCFTestReadWrite, DISABLED_VariantLookupByPosition) {
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTestReadWrite, DISABLED_VariantLookupByName) {
+TEST_F(HVCFTestReadWrite, VariantLookupByName) {
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	std::chrono::duration<double> elapsed_seconds;
 	sph_umich_edu::HVCF hvcf;
@@ -411,7 +411,7 @@ TEST_F(HVCFTestReadWrite, DISABLED_VariantLookupByName) {
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTestReadWrite, DISABLED_LargeFileTest) {
+TEST_F(HVCFTestReadWrite, LargeFileTest) {
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	std::chrono::duration<double> elapsed_seconds;
 	sph_umich_edu::HVCF hvcf;

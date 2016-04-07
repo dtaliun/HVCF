@@ -50,4 +50,4 @@ applibs:
 	$(CXX) $(CXXFLAGS) $(INCS) -c -o $@ $<
 		
 clean:
-	rm -f *.o *.so
+	rm -f *.o *.so ../src/*.o ../src/blosc/*.o
