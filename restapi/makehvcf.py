@@ -2,7 +2,7 @@ import PyHVCF
 import argparse
 
 argparser = argparse.ArgumentParser(description = 'Creates HVCF file from provided VCF file.')
-argparser.add_argument('--import-gzvcf', metavar = 'file', dest = 'importGZVCF', required = True, help = 'Input VCF compressed with gzip.')
+argparser.add_argument('--import-gzvcf', metavar = 'file', dest = 'importGZVCFs', nargs = '+', required = True, help = 'Input VCF compressed with gzip.')
 argparser.add_argument('--import-populations', metavar = 'file', dest = 'importPopulations', required = False, help = 'Input file with tab-delimited columns sample, pop, super_pop, gender')
 argparser.add_argument('--out-hvcf', metavar = 'file', dest = 'outHVCF', required = True, help = 'Output HVCF.')
 
@@ -26,8 +26,12 @@ if __name__ == '__main__':
    hvcf = PyHVCF.HVCF()
    hvcf.create(args.outHVCF)
 
-   hvcf.import_vcf(args.importGZVCF)   
+   for importGZVCF in args.importGZVCFs:
+      hvcf.import_vcf(importGZVCF)   
+      print 'Imported', importGZVCF
+
    for pop, samples in populations.iteritems():
       hvcf.create_sample_subset(pop, samples)
+      print 'Populations created'
 
    hvcf.close()
