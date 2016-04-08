@@ -85,6 +85,7 @@ private:
 	unordered_map<string, unique_ptr<WriteBuffer>> write_buffers;
 
 	unordered_map<string, subsets_cache_entry> subsets_cache;
+	unordered_map<string, unique_ptr<chromosomes_cache_entry>> chromosomes_cache;
 
 	hid_t create_variants_entry_memory_datatype() throw (HVCFCreateException);
 	hid_t create_subsets_entry_memory_datatype() throw (HVCFCreateException);
@@ -119,6 +120,7 @@ private:
 	void flush_write_buffer() throw (HVCFWriteException);
 
 	void load_subsets_cache() throw (HVCFReadException);
+	void load_chromosomes_cache() throw (HVCFReadException);
 	void load_cache() throw (HVCFReadException);
 public:
 	HVCF();
@@ -139,6 +141,7 @@ public:
 	vector<string> get_sample_subsets() throw (HVCFReadException);
 	unsigned int get_n_samples_in_subset(const string& name) throw (HVCFReadException);
 	vector<string> get_samples_in_subset(const string& name) throw (HVCFReadException);
+	unsigned int get_n_chromosomes();
 	hsize_t get_n_variants() throw (HVCFReadException);
 	hsize_t get_n_variants_in_chromosome(const string& chromosome) throw (HVCFReadException);
 

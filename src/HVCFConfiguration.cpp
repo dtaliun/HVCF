@@ -17,8 +17,8 @@ HVCFConfiguration::HVCFConfiguration() {
 	metadata_cache_min_size = 8 * 1024 * 1024;
 	metadata_cache_max_size = 128 * 1024 * 1024;
 	sieve_buffer_max_size = 64 * 1024 * 1024; // assuming max hyperslab = 10000 (variants) * 5000 (variants) * sizeof(char)
-	chunk_cache_n_slots = 10000; // following HDF5 documentation, 100x more than max number of chunks in cache (i.e. 100 * 100)
-	chunk_cache_size = 32 * 1024 * 1024; // if we want to hold up to 100 chunks in cache for haplotypes (i.e. not less than 100 * variants_chunk_size * 2 * samples_chunk_size * sizeof(char))
+	chunk_cache_n_slots = 100000; // following HDF5 documentation, 100x more than max number of chunks in cache (i.e. 100 * 1000)
+	chunk_cache_size = 200 * 1024 * 1024; // if we want to hold up to 1000 chunks in cache for haplotypes (i.e. not less than 100 * variants_chunk_size * 2 * samples_chunk_size * sizeof(char))
 }
 
 HVCFConfiguration::~HVCFConfiguration() {

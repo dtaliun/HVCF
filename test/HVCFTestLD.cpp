@@ -143,7 +143,7 @@ protected:
 	}
 };
 
-TEST_F(HVCFTestLD, DISABLED_LD_EUR_SINGLE_FILE) {
+TEST_F(HVCFTestLD, LD_EUR_SINGLE_FILE) {
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	std::chrono::duration<double> elapsed_seconds;
 	sph_umich_edu::HVCF hvcf;
@@ -157,8 +157,8 @@ TEST_F(HVCFTestLD, DISABLED_LD_EUR_SINGLE_FILE) {
 	hvcf.import_vcf("1000G_phase3.EUR.chr20.LD_test.vcf.gz");
 
 	ASSERT_EQ(503u, hvcf.get_n_samples());
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
-	ASSERT_EQ(4u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
 	hvcf.close();
 	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
@@ -166,8 +166,8 @@ TEST_F(HVCFTestLD, DISABLED_LD_EUR_SINGLE_FILE) {
 	// END: create test HVCF file.
 
 	hvcf.open("test_ld.h5");
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
-	ASSERT_EQ(4u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
 	start = std::chrono::system_clock::now();
 	result.clear();
@@ -183,7 +183,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_EUR_SINGLE_FILE) {
 			ASSERT_NEAR(pair.rsquare, precomputed_eur_ld.at(pair.position1).at(pair.position2), 0.00000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -199,7 +199,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_EUR_SINGLE_FILE) {
 			ASSERT_NEAR(pair.rsquare, precomputed_eur_ld.at(pair.position1).at(pair.position2), 0.00000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -215,7 +215,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_EUR_SINGLE_FILE) {
 			ASSERT_NEAR(pair.rsquare, precomputed_eur_ld.at(pair.position1).at(pair.position2), 0.00000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -231,7 +231,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_EUR_SINGLE_FILE) {
 			ASSERT_NEAR(pair.rsquare, precomputed_eur_ld.at(pair.position1).at(pair.position2), 0.00000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -247,7 +247,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_EUR_SINGLE_FILE) {
 			ASSERT_NEAR(pair.rsquare, precomputed_eur_ld.at(pair.position1).at(pair.position2), 0.00000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -263,7 +263,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_EUR_SINGLE_FILE) {
 			ASSERT_NEAR(pair.rsquare, precomputed_eur_ld.at(pair.position1).at(pair.position2), 0.00000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -279,7 +279,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_EUR_SINGLE_FILE) {
 			ASSERT_NEAR(pair.rsquare, precomputed_eur_ld.at(pair.position1).at(pair.position2), 0.00000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -295,7 +295,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_EUR_SINGLE_FILE) {
 			ASSERT_NEAR(pair.rsquare, precomputed_eur_ld.at(pair.position1).at(pair.position2), 0.00000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -311,7 +311,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_EUR_SINGLE_FILE) {
 			ASSERT_NEAR(pair.rsquare, precomputed_eur_ld.at(pair.position1).at(pair.position2), 0.00000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -327,7 +327,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_EUR_SINGLE_FILE) {
 			ASSERT_NEAR(pair.rsquare, precomputed_eur_ld.at(pair.position1).at(pair.position2), 0.00000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -343,7 +343,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_EUR_SINGLE_FILE) {
 			ASSERT_NEAR(pair.rsquare, precomputed_eur_ld.at(pair.position1).at(pair.position2), 0.00000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -359,14 +359,14 @@ TEST_F(HVCFTestLD, DISABLED_LD_EUR_SINGLE_FILE) {
 			ASSERT_NEAR(pair.rsquare, precomputed_eur_ld.at(pair.position1).at(pair.position2), 0.00000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	hvcf.close();
 	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTestLD, DISABLED_LD_EUR_SUBSET) {
+TEST_F(HVCFTestLD, LD_EUR_SUBSET) {
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	std::chrono::duration<double> elapsed_seconds;
 	sph_umich_edu::HVCF hvcf;
@@ -381,12 +381,12 @@ TEST_F(HVCFTestLD, DISABLED_LD_EUR_SUBSET) {
 
 	for (auto&& population : populations) {
 		hvcf.create_sample_subset(population.first, population.second);
-		ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+		ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 	}
 
 	ASSERT_EQ(2504u, hvcf.get_n_samples());
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
-	ASSERT_EQ(4u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
 	hvcf.close();
 	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
@@ -394,8 +394,8 @@ TEST_F(HVCFTestLD, DISABLED_LD_EUR_SUBSET) {
 	// END: create test HVCF file.
 
 	hvcf.open("test_ld.h5");
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
-	ASSERT_EQ(4u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
 	start = std::chrono::system_clock::now();
 	result.clear();
@@ -411,7 +411,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_EUR_SUBSET) {
 			ASSERT_NEAR(pair.rsquare, precomputed_eur_ld.at(pair.position1).at(pair.position2), 0.00000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -427,7 +427,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_EUR_SUBSET) {
 			ASSERT_NEAR(pair.rsquare, precomputed_eur_ld.at(pair.position1).at(pair.position2), 0.00000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -443,7 +443,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_EUR_SUBSET) {
 			ASSERT_NEAR(pair.rsquare, precomputed_eur_ld.at(pair.position1).at(pair.position2), 0.00000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -459,7 +459,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_EUR_SUBSET) {
 			ASSERT_NEAR(pair.rsquare, precomputed_eur_ld.at(pair.position1).at(pair.position2), 0.00000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -475,7 +475,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_EUR_SUBSET) {
 			ASSERT_NEAR(pair.rsquare, precomputed_eur_ld.at(pair.position1).at(pair.position2), 0.00000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -491,7 +491,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_EUR_SUBSET) {
 			ASSERT_NEAR(pair.rsquare, precomputed_eur_ld.at(pair.position1).at(pair.position2), 0.00000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -507,7 +507,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_EUR_SUBSET) {
 			ASSERT_NEAR(pair.rsquare, precomputed_eur_ld.at(pair.position1).at(pair.position2), 0.00000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -523,7 +523,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_EUR_SUBSET) {
 			ASSERT_NEAR(pair.rsquare, precomputed_eur_ld.at(pair.position1).at(pair.position2), 0.00000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -539,7 +539,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_EUR_SUBSET) {
 			ASSERT_NEAR(pair.rsquare, precomputed_eur_ld.at(pair.position1).at(pair.position2), 0.00000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -555,7 +555,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_EUR_SUBSET) {
 			ASSERT_NEAR(pair.rsquare, precomputed_eur_ld.at(pair.position1).at(pair.position2), 0.00000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -571,7 +571,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_EUR_SUBSET) {
 			ASSERT_NEAR(pair.rsquare, precomputed_eur_ld.at(pair.position1).at(pair.position2), 0.00000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -587,14 +587,14 @@ TEST_F(HVCFTestLD, DISABLED_LD_EUR_SUBSET) {
 			ASSERT_NEAR(pair.rsquare, precomputed_eur_ld.at(pair.position1).at(pair.position2), 0.00000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	hvcf.close();
 	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTestLD, DISABLED_LD_ALL) {
+TEST_F(HVCFTestLD, LD_ALL) {
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	std::chrono::duration<double> elapsed_seconds;
 	sph_umich_edu::HVCF hvcf;
@@ -609,12 +609,12 @@ TEST_F(HVCFTestLD, DISABLED_LD_ALL) {
 
 	for (auto&& population : populations) {
 		hvcf.create_sample_subset(population.first, population.second);
-		ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+		ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 	}
 
 	ASSERT_EQ(2504u, hvcf.get_n_samples());
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
-	ASSERT_EQ(4u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
 	hvcf.close();
 	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
@@ -622,8 +622,8 @@ TEST_F(HVCFTestLD, DISABLED_LD_ALL) {
 	// END: create test HVCF file.
 
 	hvcf.open("test_ld.h5");
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
-	ASSERT_EQ(4u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
 	start = std::chrono::system_clock::now();
 	result.clear();
@@ -639,7 +639,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_ALL) {
 			ASSERT_NEAR(pair.rsquare, precomputed_all_ld.at(pair.position1).at(pair.position2), 0.0000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -655,7 +655,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_ALL) {
 			ASSERT_NEAR(pair.rsquare, precomputed_all_ld.at(pair.position1).at(pair.position2), 0.0000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -671,7 +671,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_ALL) {
 			ASSERT_NEAR(pair.rsquare, precomputed_all_ld.at(pair.position1).at(pair.position2), 0.0000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -687,7 +687,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_ALL) {
 			ASSERT_NEAR(pair.rsquare, precomputed_all_ld.at(pair.position1).at(pair.position2), 0.0000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -703,7 +703,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_ALL) {
 			ASSERT_NEAR(pair.rsquare, precomputed_all_ld.at(pair.position1).at(pair.position2), 0.0000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -719,7 +719,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_ALL) {
 			ASSERT_NEAR(pair.rsquare, precomputed_all_ld.at(pair.position1).at(pair.position2), 0.0000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -735,7 +735,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_ALL) {
 			ASSERT_NEAR(pair.rsquare, precomputed_all_ld.at(pair.position1).at(pair.position2), 0.0000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -751,7 +751,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_ALL) {
 			ASSERT_NEAR(pair.rsquare, precomputed_all_ld.at(pair.position1).at(pair.position2), 0.0000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -767,7 +767,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_ALL) {
 			ASSERT_NEAR(pair.rsquare, precomputed_all_ld.at(pair.position1).at(pair.position2), 0.0000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -783,7 +783,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_ALL) {
 			ASSERT_NEAR(pair.rsquare, precomputed_all_ld.at(pair.position1).at(pair.position2), 0.0000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -799,7 +799,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_ALL) {
 			ASSERT_NEAR(pair.rsquare, precomputed_all_ld.at(pair.position1).at(pair.position2), 0.0000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -815,14 +815,14 @@ TEST_F(HVCFTestLD, DISABLED_LD_ALL) {
 			ASSERT_NEAR(pair.rsquare, precomputed_all_ld.at(pair.position1).at(pair.position2), 0.0000001);
 		}
 	}
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	hvcf.close();
 	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTestLD, DISABLED_LargeLD) {
+TEST_F(HVCFTestLD, LargeLD) {
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	std::chrono::duration<double> elapsed_seconds;
 	sph_umich_edu::HVCF hvcf;
@@ -832,8 +832,8 @@ TEST_F(HVCFTestLD, DISABLED_LargeLD) {
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
 	hvcf.open("test_large.h5");
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
-	ASSERT_EQ(4u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -842,7 +842,7 @@ TEST_F(HVCFTestLD, DISABLED_LargeLD) {
 	elapsed_seconds = end - start;
 	GTEST_LOG_(INFO) << "1000 variants pairwise LD = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(1000u * 1000u, result.size());
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -851,7 +851,7 @@ TEST_F(HVCFTestLD, DISABLED_LargeLD) {
 	elapsed_seconds = end - start;
 	GTEST_LOG_(INFO) << "1000 variants vs 1 LD = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(1000u, result.size());
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -860,7 +860,7 @@ TEST_F(HVCFTestLD, DISABLED_LargeLD) {
 	elapsed_seconds = end - start;
 	GTEST_LOG_(INFO) << "10000 variants pairwise LD = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(10000u * 10000u, result.size());
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -869,7 +869,7 @@ TEST_F(HVCFTestLD, DISABLED_LargeLD) {
 	elapsed_seconds = end - start;
 	GTEST_LOG_(INFO) << "10000 variants vs 1 LD = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(10000u, result.size());
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	result.clear();
 	start = std::chrono::system_clock::now();
@@ -878,7 +878,7 @@ TEST_F(HVCFTestLD, DISABLED_LargeLD) {
 	elapsed_seconds = end - start;
 	GTEST_LOG_(INFO) << "100000 variants vs 1 LD = " << elapsed_seconds.count() << " sec";
 	ASSERT_EQ(100000u, result.size());
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(10u, hvcf.get_n_opened_objects());
 
 	hvcf.close();
 	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
