@@ -1029,6 +1029,11 @@ void HVCF::write_names_index(hid_t chromosome_group_id, const hash_index_entry_t
 }
 
 void HVCF::create_indices(hid_t chromosome_group_id) throw (HVCFWriteException) {
+	if ((H5Lexists(chromosome_group_id, VARIANT_NAMES_INDEX_GROUP, H5P_DEFAULT) > 0) ||
+			(H5Lexists(chromosome_group_id, VARIANT_INTERVALS_INDEX_GROUP, H5P_DEFAULT) > 0)) {
+		return;
+	}
+
 	HDF5GroupIdentifier names_index_group_id;
 	HDF5GroupIdentifier intervals_index_group_id;
 	HDF5DatasetIdentifier dataset_id;
@@ -1160,6 +1165,10 @@ void HVCF::create_indices() throw (HVCFWriteException) {
 }
 
 void HVCF::write_samples(const vector<string>& samples) throw (HVCFWriteException) {
+	if (H5Lexists(samples_group_id, SAMPLE_NAMES_DATASET, H5P_DEFAULT) > 0) {
+		return;
+	}
+
 	HDF5DatasetIdentifier dataset_id;
 	HDF5DataspaceIdentifier file_dataspace_id;
 	HDF5DataspaceIdentifier memory_dataspace_id;
@@ -1252,7 +1261,7 @@ void HVCF::write_variant(const Variant& variant) throw (HVCFWriteException) {
 	auto chromosomes_it = chromosomes.end();
 	auto buffers_it = write_buffers.end();
 
-	if (variant.get_alt().get_values().size() != 1) { // Support only bi-allelic (for computing LD it is file, but must be extended).
+	if (variant.get_alt().get_values().size() != 1) { // Support only bi-allelic (for computing LD it is fine, but must be extended).
 		return;
 	}
 

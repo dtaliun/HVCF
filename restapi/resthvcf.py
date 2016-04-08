@@ -9,7 +9,13 @@ hvcf_file = 'test.h5'
 hvcf = PyHVCF.HVCF()
 hvcf.open(hvcf_file)
 
-@app.route('/statistic/pair/LD/', methods = ['GET'])
+# API
+
+# /populations --list of available populations
+# /populations/{XYZ} -- samples in population XYZ
+# /samples -- list of available samples
+
+@app.route('/', methods = ['GET'])
 def get_available_datasets():
    pass
 
@@ -26,7 +32,7 @@ def get_ld():
    start_time = time.time()
    hvcf.compute_ld(str(chromosome), str(population), str(variant), long(start), long(end), pairs)
    elapsed_time = time.time() - start_time
-   print 'HVCF request executed in ', elapsed_time, ' sec'
+   print 'HVCF request executed in ', elapsed_time, ' sec (', len(pairs), ')'
 
    start_time = time.time()
    result = { 
@@ -44,7 +50,7 @@ def get_ld():
 
    j = jsonify(result)       
    elapsed_time = time.time() - start_time
-   print 'Response formatting executed in ', elapsed_time, ' sec' 
+   print 'Response formatting executed in ', elapsed_time, ' sec (', len(pairs), ')' 
 
    return j
 
