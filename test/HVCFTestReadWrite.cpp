@@ -61,7 +61,7 @@ protected:
 	}
 };
 
-TEST_F(HVCFTestReadWrite, ImportVCF_ALL) {
+TEST_F(HVCFTestReadWrite, DISABLED_ImportVCF_ALL) {
 	{ // 'dummy' scope to check if HVCF object closes every opened HDF5 identifier on its destruction
 		sph_umich_edu::HVCF hvcf;
 
@@ -139,7 +139,7 @@ TEST_F(HVCFTestReadWrite, ImportVCF_ALL) {
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTestReadWrite, ImportVCFbyChromosome_ALL) {
+TEST_F(HVCFTestReadWrite, DISABLED_ImportVCFbyChromosome_ALL) {
 	{ // 'dummy' scope to check if HVCF object closes every opened HDF5 identifier on its destruction
 		sph_umich_edu::HVCF hvcf;
 
@@ -222,7 +222,7 @@ TEST_F(HVCFTestReadWrite, ImportVCFbyChromosome_ALL) {
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTestReadWrite, ImportVCF_EUR) {
+TEST_F(HVCFTestReadWrite, DISABLED_ImportVCF_EUR) {
 	{ // 'dummy' scope to check if HVCF object closes every opened HDF5 identifier on its destruction
 		sph_umich_edu::HVCF hvcf;
 
@@ -281,7 +281,7 @@ TEST_F(HVCFTestReadWrite, ImportVCF_EUR) {
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTestReadWrite, ImportVCFbyChromosome_EUR) {
+TEST_F(HVCFTestReadWrite, DISABLED_ImportVCFbyChromosome_EUR) {
 	{ // 'dummy' scope to check if HVCF object closes every opened HDF5 identifier on its destruction
 		sph_umich_edu::HVCF hvcf;
 
@@ -342,7 +342,7 @@ TEST_F(HVCFTestReadWrite, ImportVCFbyChromosome_EUR) {
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTestReadWrite, VariantLookupByPosition) {
+TEST_F(HVCFTestReadWrite, DISABLED_VariantLookupByPosition) {
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	std::chrono::duration<double> elapsed_seconds;
 	sph_umich_edu::HVCF hvcf;
@@ -538,7 +538,7 @@ TEST_F(HVCFTestReadWrite, VariantLookupByPosition) {
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTestReadWrite, VariantLookupByName) {
+TEST_F(HVCFTestReadWrite, DISABLED_VariantLookupByName) {
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	std::chrono::duration<double> elapsed_seconds;
 	sph_umich_edu::HVCF hvcf;
@@ -586,7 +586,7 @@ TEST_F(HVCFTestReadWrite, VariantLookupByName) {
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTestReadWrite, LargeFileTest) {
+TEST_F(HVCFTestReadWrite, DISABLED_LargeVCF_EUR_CHR20) {
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	std::chrono::duration<double> elapsed_seconds;
 	sph_umich_edu::HVCF hvcf;
@@ -594,7 +594,7 @@ TEST_F(HVCFTestReadWrite, LargeFileTest) {
 	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
-	hvcf.create("test_large.h5");
+	hvcf.create("test_large_eur_chr20.h5");
 	hvcf.import_vcf("1000G_phase3.EUR.chr20.vcf.gz");
 
 	ASSERT_EQ(503u, hvcf.get_n_samples());
@@ -605,7 +605,7 @@ TEST_F(HVCFTestReadWrite, LargeFileTest) {
 	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
-	hvcf.open("test_large.h5");
+	hvcf.open("test_large_eur_chr20.h5");
 	ASSERT_EQ(13u, hvcf.get_n_opened_objects());
 	ASSERT_EQ(18u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
@@ -789,96 +789,234 @@ TEST_F(HVCFTestReadWrite, LargeFileTest) {
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTestReadWrite, DISABLED_ChunkReadTest) {
+TEST_F(HVCFTestReadWrite, DISABLED_LargeVCF_ALL_CHR20) {
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	std::chrono::duration<double> elapsed_seconds;
 	sph_umich_edu::HVCF hvcf;
 
-	hvcf.open("test_large.h5");
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
-	ASSERT_EQ(4u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
-	start = std::chrono::system_clock::now();
-	hvcf.chunk_read_test("20", 61955ul, 167900ul);
-	end = std::chrono::system_clock::now();
-	elapsed_seconds = end - start;
-	GTEST_LOG_(INFO) << "1000 variants = " << elapsed_seconds.count() << " sec";
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	hvcf.create("test_large_all_chr20.h5");
+	hvcf.import_vcf("ALL.chr20.phase3_shapeit2_mvncall_integrated_v5a.20130502.biallelic.genotypes.vcf.gz");
 
-	start = std::chrono::system_clock::now();
-	hvcf.chunk_read_test("20", 3322215ul, 4397713ul);
-	end = std::chrono::system_clock::now();
-	elapsed_seconds = end - start;
-	GTEST_LOG_(INFO) << "10000 variants = " << elapsed_seconds.count() << " sec";
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(2504u, hvcf.get_n_samples());
+	ASSERT_EQ(1u, hvcf.get_n_chromosomes());
+	ASSERT_EQ(13u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(18u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
-	start = std::chrono::system_clock::now();
-	hvcf.chunk_read_test("20", 3322215ul, 14879114ul);
-	end = std::chrono::system_clock::now();
-	elapsed_seconds = end - start;
-	GTEST_LOG_(INFO) << "100000 variants = " << elapsed_seconds.count() << " sec";
-	ASSERT_EQ(4u, hvcf.get_n_opened_objects());
+	for (auto&& population : populations) {
+		hvcf.create_sample_subset(population.first, population.second);
+		ASSERT_EQ(13u, hvcf.get_n_opened_objects());
+	}
+
+	auto populations_it = populations.end();
+	vector<string> hvcf_populations = std::move(hvcf.get_sample_subsets());
+	ASSERT_EQ(populations.size() + 1, hvcf_populations.size());
+	for (auto&& hvcf_population : hvcf_populations) {
+		if (hvcf_population.compare("ALL") != 0) {
+			populations_it = populations.find(hvcf_population);
+			ASSERT_TRUE(populations_it != populations.end());
+			ASSERT_EQ(populations_it->second.size(), hvcf.get_n_samples_in_subset(hvcf_population));
+			vector<string> hvcf_samples = std::move(hvcf.get_samples_in_subset(hvcf_population));
+			set<string> hvcf_samples_ordered(hvcf_samples.begin(), hvcf_samples.end());
+			for (auto&& sample : populations_it->second) {
+				ASSERT_EQ(1u, hvcf_samples_ordered.count(sample));
+			}
+		} else {
+			ASSERT_EQ(2504u, hvcf.get_n_samples_in_subset(hvcf_population));
+		}
+	}
+
+	ASSERT_EQ(13u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(18u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
 	hvcf.close();
-	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
-	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
-
-}
-
-TEST_F(HVCFTestReadWrite, DISABLED_ImportVCF_CHR20_ALL) {
-	{ // 'dummy' scope to check if HVCF object closes every opened HDF5 identifier on its destruction
-		sph_umich_edu::HVCF hvcf;
-
-		ASSERT_EQ(0u, hvcf.get_n_opened_objects());
-		ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
-
-		hvcf.create("test_chr20_all.h5");
-		hvcf.import_vcf("ALL.chr20.phase3_shapeit2_mvncall_integrated_v5a.20130502.biallelic.genotypes.vcf.gz");
-
-		ASSERT_EQ(2504u, hvcf.get_n_samples());
-		ASSERT_EQ(1u, hvcf.get_n_chromosomes());
-		ASSERT_EQ(12u, hvcf.get_n_opened_objects());
-		ASSERT_EQ(17u, sph_umich_edu::HVCF::get_n_all_opened_objects());
-
-		for (auto&& population : populations) {
-			hvcf.create_sample_subset(population.first, population.second);
-			ASSERT_EQ(12u, hvcf.get_n_opened_objects());
-		}
-
-		auto populations_it = populations.end();
-		vector<string> hvcf_populations = std::move(hvcf.get_sample_subsets());
-		ASSERT_EQ(populations.size() + 1, hvcf_populations.size());
-		for (auto&& hvcf_population : hvcf_populations) {
-			if (hvcf_population.compare("ALL") != 0) {
-				populations_it = populations.find(hvcf_population);
-				ASSERT_TRUE(populations_it != populations.end());
-				ASSERT_EQ(populations_it->second.size(), hvcf.get_n_samples_in_subset(hvcf_population));
-				vector<string> hvcf_samples = std::move(hvcf.get_samples_in_subset(hvcf_population));
-				set<string> hvcf_samples_ordered(hvcf_samples.begin(), hvcf_samples.end());
-				for (auto&& sample : populations_it->second) {
-					ASSERT_EQ(1u, hvcf_samples_ordered.count(sample));
-				}
-			} else {
-				ASSERT_EQ(2504u, hvcf.get_n_samples_in_subset(hvcf_population));
-			}
-		}
-
-		ASSERT_EQ(24u, hvcf.get_n_opened_objects());
-		ASSERT_EQ(29u, sph_umich_edu::HVCF::get_n_all_opened_objects());
-	}
-	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
-
-	sph_umich_edu::HVCF hvcf;
 
 	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
-	hvcf.open("test_all.h5");
-	ASSERT_EQ(24u, hvcf.get_n_opened_objects());
-	ASSERT_EQ(29u, sph_umich_edu::HVCF::get_n_all_opened_objects());
+	hvcf.open("test_large_all_chr20.h5");
+	ASSERT_EQ(13u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(18u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
 	ASSERT_EQ(1797799u, hvcf.get_n_variants_in_chromosome("20"));
-	ASSERT_EQ(24u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(13u, hvcf.get_n_opened_objects());
+
+	// --
+	ASSERT_EQ(-1, hvcf.get_variant_offset_by_position_eq("XYZ", 60343ul));
+	ASSERT_EQ(13u, hvcf.get_n_opened_objects());
+
+	ASSERT_EQ(-1, hvcf.get_variant_offset_by_position_ge("XYZ", 60343ul));
+	ASSERT_EQ(13u, hvcf.get_n_opened_objects());
+
+	ASSERT_EQ(-1, hvcf.get_variant_offset_by_position_le("XYZ", 60343ul));
+	ASSERT_EQ(13u, hvcf.get_n_opened_objects());
+
+	// --
+	start = std::chrono::system_clock::now();
+	ASSERT_LE(-1, hvcf.get_variant_offset_by_position_eq("20", 0ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (eq) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(13u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_LE(0, hvcf.get_variant_offset_by_position_ge("20", 0ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (ge) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(13u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_LE(-1, hvcf.get_variant_offset_by_position_le("20", 0ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (le) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(13u, hvcf.get_n_opened_objects());
+
+	// --
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(0, hvcf.get_variant_offset_by_position_eq("20", 60343ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (eq) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(13u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(0, hvcf.get_variant_offset_by_position_ge("20", 60343ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (ge) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(13u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(0, hvcf.get_variant_offset_by_position_le("20", 60343ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (le) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(13u, hvcf.get_n_opened_objects());
+
+	// --
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(326057, hvcf.get_variant_offset_by_position_eq("20", 11012125ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (eq) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(13u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(326057, hvcf.get_variant_offset_by_position_ge("20", 11012125ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (eq) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(13u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(326057, hvcf.get_variant_offset_by_position_le("20", 11012125ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (eq) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(13u, hvcf.get_n_opened_objects());
+
+	// --
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(1797798, hvcf.get_variant_offset_by_position_eq("20", 62965354ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (eq) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(13u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(1797798, hvcf.get_variant_offset_by_position_ge("20", 62965354ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (ge) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(13u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(1797798, hvcf.get_variant_offset_by_position_le("20", 62965354ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (le) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(13u, hvcf.get_n_opened_objects());
+
+	// --
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(-1, hvcf.get_variant_offset_by_position_eq("20", 97552ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (eq) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(13u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(1000, hvcf.get_variant_offset_by_position_ge("20", 97552ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (ge) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(13u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(999, hvcf.get_variant_offset_by_position_le("20", 97552ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (ge) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(13u, hvcf.get_n_opened_objects());
+
+	//--
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(-1, hvcf.get_variant_offset_by_position_eq("20", 44600840ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (eq) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(13u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(1213665, hvcf.get_variant_offset_by_position_ge("20", 44600840ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (ge) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(13u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(1213664, hvcf.get_variant_offset_by_position_le("20", 44600840ul));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single position (le) = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(13u, hvcf.get_n_opened_objects());
+
+	// --
+	ASSERT_EQ(-1, hvcf.get_variant_offset_by_name("XYZ", "20:60343_G/A"));
+	ASSERT_EQ(13u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(-1, hvcf.get_variant_offset_by_name("20", "20:282263_T/A"));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single name = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(13u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(0, hvcf.get_variant_offset_by_name("20", "20:60343_G/A"));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single name = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(13u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(457635, hvcf.get_variant_offset_by_name("20", "20:15559167_TAGTTAAA/T"));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single name = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(13u, hvcf.get_n_opened_objects());
+
+	start = std::chrono::system_clock::now();
+	ASSERT_EQ(1797798, hvcf.get_variant_offset_by_name("20", "20:62965354_G/A"));
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	GTEST_LOG_(INFO) << "Lookup by single name = " << elapsed_seconds.count() << " sec";
+	ASSERT_EQ(13u, hvcf.get_n_opened_objects());
+	ASSERT_EQ(18u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
 	hvcf.close();
 	ASSERT_EQ(0u, hvcf.get_n_opened_objects());

@@ -166,9 +166,7 @@ public:
 	unsigned int get_n_opened_objects() const;
 	static unsigned int get_n_all_opened_objects();
 
-	void chunk_read_test(const string& chromosome, unsigned long long int start_position, unsigned long long end_position) throw (HVCFReadException);
-
-	void chunk_read_test2() throw (HVCFReadException);
+	void compute_ld_test(const string& chromosome, const string& subset, const string& lead_variant_name, unsigned long long int start_position, unsigned long long end_position, vector<variants_pair>& result) throw (HVCFReadException);
 };
 
 }
