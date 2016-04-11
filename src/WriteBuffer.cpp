@@ -8,13 +8,23 @@ WriteBuffer::WriteBuffer(unsigned int max_variants, unsigned int n_samples):
 		n_haplotypes(n_samples + n_samples),
 		haplotypes(nullptr),
 		variants(nullptr),
-		n_variants(0u) {
+		n_variants(0u),
+		n_flushed_variants(0u) {
 
 	haplotypes = unique_ptr<unsigned char[]>(new unsigned char[n_haplotypes * max_variants]{});
-
 	variants = unique_ptr<variants_entry_type[]>(new variants_entry_type[max_variants]{});
 	for (unsigned int i = 0u; i < max_variants; ++i) {
 		variants[i].name = nullptr;
+		variants[i].ref = nullptr;
+		variants[i].alt = nullptr;
+	}
+
+	flushed_haplotypes = unique_ptr<unsigned char[]>(new unsigned char[n_haplotypes * max_variants]{});
+	flushed_variants = unique_ptr<variants_entry_type[]>(new variants_entry_type[max_variants]{});
+	for (unsigned int i = 0u; i < max_variants; ++i) {
+		flushed_variants[i].name = nullptr;
+		flushed_variants[i].ref = nullptr;
+		flushed_variants[i].alt = nullptr;
 	}
 }
 
@@ -23,6 +33,26 @@ WriteBuffer::~WriteBuffer() {
 		if (variants[i].name != nullptr) {
 			delete variants[i].name;
 			variants[i].name = nullptr;
+		}
+		if (variants[i].ref != nullptr) {
+			delete variants[i].ref;
+			variants[i].ref = nullptr;
+		}
+		if (variants[i].alt != nullptr) {
+			delete variants[i].alt;
+			variants[i].alt = nullptr;
+		}
+		if (flushed_variants[i].name != nullptr) {
+			delete flushed_variants[i].name;
+			flushed_variants[i].name = nullptr;
+		}
+		if (flushed_variants[i].ref != nullptr) {
+			delete flushed_variants[i].ref;
+			flushed_variants[i].ref = nullptr;
+		}
+		if (flushed_variants[i].alt != nullptr) {
+			delete flushed_variants[i].alt;
+			flushed_variants[i].alt = nullptr;
 		}
 	}
 }
@@ -46,6 +76,9 @@ void WriteBuffer::add_variant(const Variant& variant) throw (HVCFWriteException)
 					 variant.get_ref().get_text().length() +
 					 variant.get_alt().get_text().length() + 4u]{});
 
+	unique_ptr<char[]> ref = unique_ptr<char[]>(new char[variant.get_ref().get_text().length() + 1u]{});
+	unique_ptr<char[]> alt = unique_ptr<char[]>(new char[variant.get_alt().get_text().length() + 1u]{});
+
 	name[0] = '\0';
 	strcat(name.get(), variant.get_chrom().get_text().c_str());
 	strcat(name.get(), ":");
@@ -55,40 +88,51 @@ void WriteBuffer::add_variant(const Variant& variant) throw (HVCFWriteException)
 	strcat(name.get(), "/");
 	strcat(name.get(), variant.get_alt().get_text().c_str());
 
+	ref[0] = '\0';
+	strcat(ref.get(), variant.get_ref().get_text().c_str());
+
+	alt[0] = '\0';
+	strcat(alt.get(), variant.get_alt().get_text().c_str());
+
 	variants[n_variants].name = name.release();
+	variants[n_variants].ref = ref.release();
+	variants[n_variants].alt = alt.release();
 	variants[n_variants].position = variant.get_pos().get_value();
 
 	++n_variants;
 }
 
-void WriteBuffer::reset() {
-	for (unsigned int i = 0u; i < n_variants; ++i) {
-		if (variants[i].name != nullptr) {
-			delete variants[i].name;
-			variants[i].name = nullptr;
+tuple<const unsigned char*, const variants_entry_type*, unsigned int, unsigned int> WriteBuffer::flush() {
+	for (unsigned int i = 0u; i < n_flushed_variants; ++i) {
+		if (flushed_variants[i].name != nullptr) {
+			delete flushed_variants[i].name;
+			flushed_variants[i].name = nullptr;
+		}
+		if (flushed_variants[i].ref != nullptr) {
+			delete flushed_variants[i].ref;
+			flushed_variants[i].ref = nullptr;
+		}
+		if (flushed_variants[i].alt != nullptr) {
+			delete flushed_variants[i].alt;
+			flushed_variants[i].alt = nullptr;
 		}
 	}
+
+	n_flushed_variants = n_variants;
+	flushed_haplotypes.swap(haplotypes);
+	flushed_variants.swap(variants);
+
 	n_variants = 0u;
+
+	return std::make_tuple(flushed_haplotypes.get(), flushed_variants.get(), n_flushed_variants, n_haplotypes);
 }
 
 unsigned int WriteBuffer::get_max_variants() const {
 	return max_variants;
 }
 
-unsigned int WriteBuffer::get_n_variants() const {
-	return n_variants;
-}
-
-unsigned int WriteBuffer::get_n_haplotypes() const {
-	return n_haplotypes;
-}
-
-const unsigned char* WriteBuffer::get_haplotypes_buffer() const {
-	return haplotypes.get();
-}
-
-const variants_entry_type* WriteBuffer::get_variants_buffer() const {
-	return variants.get();
+unsigned int WriteBuffer::get_n_samples() const {
+	return n_samples;
 }
 
 bool WriteBuffer::is_full() const {

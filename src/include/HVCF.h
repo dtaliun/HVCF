@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <chrono>
+#include <future>
 
 #define ARMA_NO_DEBUG
 #include <armadillo>
@@ -47,6 +48,12 @@ private:
 	HDF5FileIdentifier file_id;
 	HDF5GroupIdentifier samples_group_id;
 	HDF5GroupIdentifier chromosomes_group_id;
+	HDF5DatatypeIdentifier native_string_datatype_id;
+	HDF5DatatypeIdentifier hash_index_entry_memory_datatype_id;
+	HDF5DatatypeIdentifier string_index_entry_memory_datatype_id;
+	HDF5DatatypeIdentifier interval_index_entry_memory_datatype_id;
+	HDF5DatatypeIdentifier ull_index_entry_memory_datatype_id;
+	HDF5DatatypeIdentifier variants_entry_memory_datatype_id;
 
 	unsigned int N_HASH_BUCKETS;
 	unsigned int MAX_VARIANTS_IN_INTERVAL_BUCKET;
@@ -75,16 +82,16 @@ private:
 	static constexpr char INTERVAL_INDEX_ENTRY_TYPE[] = "interval_index_entry_type";
 	static constexpr char HASH_INDEX_ENTRY_TYPE[] = "hash_index_entry_type";
 	static constexpr char ULL_INDEX_ENTRY_TYPE[] = "ull_index_entry_type";
-	static constexpr char VARIANT_NAMES_INDEX_GROUP[] = "names_index";
-	static constexpr char VARIANT_INTERVALS_INDEX_GROUP[] = "intervals_index";
-	static constexpr char VARIANT_INTERVALS_INDEX[] = "intervals";
-	static constexpr char VARIANT_HASH_INDEX[] = "hashes";
+	static constexpr char NAMES_INDEX_GROUP[] = "names_index";
+	static constexpr char INTERVALS_INDEX_GROUP[] = "intervals_index";
+	static constexpr char INTERVALS_INDEX[] = "intervals";
+	static constexpr char HASH_INDEX[] = "hashes";
 	static constexpr char INDEX_BUCKETS[] = "buckets";
 
 	unordered_map<string, unique_ptr<HDF5GroupIdentifier>> chromosomes;
 	unordered_map<string, unique_ptr<WriteBuffer>> write_buffers;
 
-	unordered_map<string, subsets_cache_entry> subsets_cache;
+	samples_cache_entry samples_cache;
 	unordered_map<string, unique_ptr<chromosomes_cache_entry>> chromosomes_cache;
 
 	hid_t create_variants_entry_memory_datatype() throw (HVCFCreateException);
@@ -106,20 +113,22 @@ private:
 	void write_intervals_index_bucket(hid_t chromosome_group_id, const vector<hsize_t>& offsets, interval_index_entry_type& interval_index_entry) throw (HVCFWriteException);
 	void write_intervals_index(hid_t chromosome_group_id, const interval_index_entry_type* interval_index_entries, unsigned int n_interval_index_entries) throw (HVCFWriteException);
 
-	void write_names_index_bucket(hid_t chromosome_group_id, const vector<hsize_t>& offsets, hash_index_entry_type& hash_index_entry) throw (HVCFWriteException);
+	void write_variant_names_index_bucket(hid_t chromosome_group_id, const vector<hsize_t>& offsets, hash_index_entry_type& hash_index_entry) throw (HVCFWriteException);
+	void write_sample_names_index_bucket(hid_t chromosome_group_id, const vector<hsize_t>& offsets, hash_index_entry_type& hash_index_entry) throw (HVCFWriteException);
 	void write_names_index(hid_t chromosome_group_id, const hash_index_entry_type* hash_index_entries, unsigned int n_hash_index_entries) throw (HVCFWriteException);
 
 	void write_haplotypes(hid_t group_id, const unsigned char* buffer, unsigned int n_variants, unsigned int n_haplotypes) throw (HVCFWriteException);
 	void write_variants(hid_t group_id, const variants_entry_type* buffer, unsigned int n_variants) throw (HVCFWriteException);
 
-	void create_indices(hid_t chromosome_group_id) throw (HVCFWriteException);
+	void create_chromosome_index(hid_t chromosome_group_id) throw (HVCFWriteException);
+	void create_samples_index() throw (HVCFWriteException);
 	void create_indices() throw (HVCFWriteException);
 
 	void write_samples(const vector<string>& samples) throw (HVCFWriteException);
-	void write_variant(const Variant& variant) throw (HVCFWriteException);
-	void flush_write_buffer() throw (HVCFWriteException);
+	void write_variant(const Variant& variant, future<void>& async_write) throw (HVCFWriteException);
+	void flush_write_buffer(future<void>& async_write) throw (HVCFWriteException);
 
-	void load_subsets_cache() throw (HVCFReadException);
+	void load_samples_cache() throw (HVCFReadException);
 	void load_chromosomes_cache() throw (HVCFReadException);
 	void load_cache() throw (HVCFReadException);
 public:
@@ -149,6 +158,7 @@ public:
 	long long int get_variant_offset_by_position_ge(const string& chromosome, unsigned long long int position) throw (HVCFReadException);
 	long long int get_variant_offset_by_position_le(const string& chromosome, unsigned long long int position) throw (HVCFReadException);
 	long long int get_variant_offset_by_name(const string& chromosome, const string& name) throw (HVCFReadException);
+	long long int get_sample_offset(const string& name) throw (HVCFReadException);
 
 	void compute_ld(const string& chromosome, const string& subset, unsigned long long int start_position, unsigned long long end_position, vector<variants_pair>& result) throw (HVCFReadException);
 	void compute_ld(const string& chromosome, const string& subset, const string& lead_variant_name, unsigned long long int start_position, unsigned long long end_position, vector<variants_pair>& result) throw (HVCFReadException);

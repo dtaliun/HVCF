@@ -2,6 +2,7 @@
 #define SRC_INCLUDE_TYPES_H_
 
 #include <string>
+#include <map>
 #include "hdf5.h"
 
 #include "HDF5DatasetIdentifier.h"
@@ -36,6 +37,8 @@ typedef struct {
 
 typedef struct {
 	char* name;
+	char* ref;
+	char* alt;
 	unsigned long long int position;
 } variants_entry_type;
 
@@ -49,6 +52,12 @@ typedef struct {
 	vector<tuple<hsize_t, hsize_t, hsize_t>> chunks; // offset_1 (start), offset_2 (end), size (offset_2 - offset_1 + 1)
 	hsize_t n_samples;
 } subsets_cache_entry;
+
+typedef struct {
+	HDF5DatasetIdentifier names_index_id;
+	HDF5DatasetIdentifier names_index_buckets_id;
+	unordered_map<string, subsets_cache_entry> subsets;
+} samples_cache_entry;
 
 typedef struct {
 	HDF5DatasetIdentifier names_index_id;
