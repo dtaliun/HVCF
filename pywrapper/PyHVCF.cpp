@@ -23,6 +23,13 @@ BOOST_PYTHON_MODULE(PyHVCF)
 
 	def("get_n_all_opened_objects", HVCF::get_n_all_opened_objects);
 
+	class_<variant_info>("Variant", init<const char*, const char*, const char*, unsigned long long int>())
+			.def_readonly("name", &variant_info::name)
+			.def_readonly("ref", &variant_info::ref)
+			.def_readonly("alt", &variant_info::alt)
+			.def_readonly("position", &variant_info::position)
+		;
+
 	class_<variants_pair>("VariantsPair", init<const char*, unsigned long int, const char*, unsigned long int , double, double>())
 			.def_readonly("name1", &VariantsPair::name1)
 			.def_readonly("position1", &VariantsPair::position1)
@@ -34,6 +41,10 @@ BOOST_PYTHON_MODULE(PyHVCF)
 
 	class_<vector<string>>("NamesVector")
 			.def(vector_indexing_suite<std::vector<std::string>>())
+		;
+
+	class_<vector<variant_info>>("VariantsVector")
+			.def(vector_indexing_suite<std::vector<variant_info>>())
 		;
 
 	class_<vector<variants_pair>>("PairsVector")
@@ -52,10 +63,15 @@ BOOST_PYTHON_MODULE(PyHVCF)
 			.def("get_sample_subsets", &HVCF::get_sample_subsets, return_value_policy<return_by_value>())
 			.def("get_n_samples_in_subset", &HVCF::get_n_samples_in_subset)
 			.def("get_samples_in_subset", &HVCF::get_samples_in_subset, return_value_policy<return_by_value>())
+			.def("get_chromosomes", &HVCF::get_chromosomes, return_value_policy<return_by_value>())
+			.def("has_chromosome", &HVCF::has_chromosome)
+			.def("get_chromosome_start", &HVCF::get_chromosome_start)
+			.def("get_chromosome_end", &HVCF::get_chromosome_end)
 			.def("get_n_variants", &HVCF::get_n_variants)
 			.def("get_n_variants_in_chromosome", &HVCF::get_n_variants_in_chromosome)
 			.def("compute_ld", compute_region_ld)
 			.def("compute_ld", compute_lead_ld)
+			.def("extract_variants", &HVCF::extract_variants)
 			.def("get_n_opened_objects", &HVCF::get_n_opened_objects)
 		;
 }

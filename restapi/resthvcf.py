@@ -9,21 +9,77 @@ hvcf_file = 'test.h5'
 hvcf = PyHVCF.HVCF()
 hvcf.open(hvcf_file)
 
-# API
-
-# /populations --list of available populations
-# /populations/{XYZ} -- samples in population XYZ
-# /samples -- list of available samples
-
 @app.route('/', methods = ['GET'])
 def get_available_datasets():
    pass
 
-@app.route('/LD/results', methods = ['GET'])
-def get_ld():
-   population = request.args['population']
+@app.route('/populations', methods = ['GET'])
+def get_populations():
+   names = hvcf.get_sample_subsets()
+   result = { 'names': [name for name in names] }
+   j = jsonify(result)
+   return j
+
+@app.route('/populations/<name>', methods = ['GET'])
+def get_samples_in_population(name):
+   names = hvcf.get_samples_in_subset(str(name))
+   result = { 'names': [name for name in names] }
+   j = jsonify(result)
+   return j
+
+@app.route('/chromosomes', methods = ['GET'])
+def get_chromosomes():
+   names = hvcf.get_chromosomes()
+   result = { 'names': [name for name in names] }
+   j = jsonify(result)
+   return j
+
+@app.route('/chromosomes/<name>', methods = ['GET'])
+def get_chromosome(name):
+   if hvcf.has_chromosome(str(name)):
+      n_variants = hvcf.get_n_variants_in_chromosome(str(name))
+      start = hvcf.get_chromosome_start(str(name))
+      end = hvcf.get_chromosome_end(str(name))
+      result = { 'name': name, 'n_variants': n_variants, 'first_variant_bp': start, 'last_variant_bp': end } 
+   else:
+      result = {}
+   j = jsonify(result)
+   return j
+
+@app.route('/chromosomes/<name>/variants', methods = ['GET'])
+def get_variants_in_region(name):
+   start = request.args['start']
+   end = request.args['end']
+
+   variants = PyHVCF.VariantsVector()
+   
+   hvcf.extract_variants(str(name), long(start), long(end), variants)
+
+   result = {
+      'chromosome': [str(name)] * len(variants),
+      'variant': [None] * len(variants),
+      'alt': [None] * len(variants),
+      'ref': [None] * len(variants),
+      'position': [None] * len(variants)
+   }
+
+   for i, variant in enumerate(variants):
+      result['variant'][i] = variant.name
+      result['position'][i] = variant.position
+      result['alt'][i] = variant.alt
+      result['ref'][i] = variant.ref
+
+   j = jsonify(result) 
+
+   return j
+
+@app.route('/chromosomes/<name>/af', methods = ['GET'])
+def get_af_in_region(name):
+   return 'af'
+
+@app.route('/chromosomes/<chromosome>/<population>/ld', methods = ['GET'])
+def get_ld_in_region(chromosome, population):
    variant = request.args['variant']
-   chromosome = request.args['chromosome']
    start = request.args['start']
    end = request.args['end']
 

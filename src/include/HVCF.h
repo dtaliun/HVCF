@@ -156,9 +156,13 @@ public:
 	vector<string> get_sample_subsets() throw (HVCFReadException);
 	unsigned int get_n_samples_in_subset(const string& name) throw (HVCFReadException);
 	vector<string> get_samples_in_subset(const string& name) throw (HVCFReadException);
-	unsigned int get_n_chromosomes();
-	hsize_t get_n_variants() throw (HVCFReadException);
-	hsize_t get_n_variants_in_chromosome(const string& chromosome) throw (HVCFReadException);
+	unsigned int get_n_chromosomes() const;
+	vector<string> get_chromosomes() const;
+	bool has_chromosome(const string& chromosome) const;
+	unsigned long long int get_chromosome_start(const string& chromosome) const throw (HVCFReadException);
+	unsigned long long int get_chromosome_end(const string& chromosome) const throw (HVCFReadException);
+	hsize_t get_n_variants() const throw (HVCFReadException);
+	hsize_t get_n_variants_in_chromosome(const string& chromosome) const throw (HVCFReadException);
 
 	long long int get_variant_offset_by_position_eq(const string& chromosome, unsigned long long int position) throw (HVCFReadException);
 	long long int get_variant_offset_by_position_ge(const string& chromosome, unsigned long long int position) throw (HVCFReadException);
@@ -166,8 +170,9 @@ public:
 	long long int get_variant_offset_by_name(const string& chromosome, const string& name) throw (HVCFReadException);
 	long long int get_sample_offset(const string& name) throw (HVCFReadException);
 
-	void compute_ld(const string& chromosome, const string& subset, unsigned long long int start_position, unsigned long long end_position, vector<variants_pair>& result) throw (HVCFReadException);
-	void compute_ld(const string& chromosome, const string& subset, const string& lead_variant_name, unsigned long long int start_position, unsigned long long end_position, vector<variants_pair>& result) throw (HVCFReadException);
+	void compute_ld(const string& chromosome, const string& subset, unsigned long long int start_position, unsigned long long int end_position, vector<variants_pair>& result) throw (HVCFReadException);
+	void compute_ld(const string& chromosome, const string& subset, const string& lead_variant_name, unsigned long long int start_position, unsigned long long int end_position, vector<variants_pair>& result) throw (HVCFReadException);
+	void extract_variants(const string& chromosome, unsigned long long int start_position, unsigned long long int end_position, vector<variant_info>& result) throw (HVCFReadException);
 
 	unsigned int get_n_opened_objects() const;
 	static unsigned int get_n_all_opened_objects();

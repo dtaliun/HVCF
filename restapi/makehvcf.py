@@ -1,5 +1,6 @@
 import PyHVCF
 import argparse
+import time
 
 argparser = argparse.ArgumentParser(description = 'Creates HVCF file from provided VCF file.')
 argparser.add_argument('--import-gzvcf', metavar = 'file', dest = 'importGZVCFs', nargs = '+', required = True, help = 'Input VCF compressed with gzip.')
@@ -27,11 +28,13 @@ if __name__ == '__main__':
    hvcf.create(args.outHVCF)
 
    for importGZVCF in args.importGZVCFs:
-      hvcf.import_vcf(importGZVCF)   
-      print 'Imported', importGZVCF
+      start_time = time.time()
+      hvcf.import_vcf(importGZVCF)
+      elapsed_time = time.time() - start_time   
+      print 'Imported %s (%f sec)' % (importGZVCF, elapsed_time)
 
    for pop, samples in populations.iteritems():
       hvcf.create_sample_subset(pop, samples)
-      print 'Populations created'
+      print 'Population imported: %s (%d samples)' % (pop, len(samples))
 
    hvcf.close()

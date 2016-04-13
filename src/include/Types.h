@@ -68,6 +68,22 @@ typedef struct {
 	HDF5DatasetIdentifier haplotypes_id;
 } chromosomes_cache_entry;
 
+typedef struct VariantInfo {
+	string name;
+	string ref;
+	string alt;
+	unsigned long long int position;
+
+	VariantInfo(const char* name, const char* ref, const char* alt, unsigned long long int position) :
+		name(name), ref(ref), alt(alt), position(position) {
+	}
+
+	bool operator==(VariantInfo const& info) const { // needed for boost.python
+		return (position == info.position && position == info.position);
+	}
+
+} variant_info;
+
 typedef struct VariantsPair{
 	string name1;
 	unsigned long long int position1;
