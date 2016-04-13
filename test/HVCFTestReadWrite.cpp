@@ -68,7 +68,7 @@ TEST_F(HVCFTestReadWrite, DISABLED_ImportVCF_ALL) {
 		ASSERT_EQ(0u, hvcf.get_n_opened_objects());
 		ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
-		hvcf.create("test_all.h5");
+		hvcf.create("test_all_new1.h5");
 		hvcf.import_vcf("1000G_phase3.ALL.chr20-22.10K.vcf.gz");
 
 		ASSERT_EQ(2504u, hvcf.get_n_samples());
@@ -109,7 +109,7 @@ TEST_F(HVCFTestReadWrite, DISABLED_ImportVCF_ALL) {
 	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
-	hvcf.open("test_all.h5");
+	hvcf.open("test_all_new1.h5");
 	ASSERT_EQ(27u, hvcf.get_n_opened_objects());
 	ASSERT_EQ(32u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
@@ -789,7 +789,7 @@ TEST_F(HVCFTestReadWrite, DISABLED_LargeVCF_EUR_CHR20) {
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTestReadWrite, DISABLED_LargeVCF_ALL_CHR20) {
+TEST_F(HVCFTestReadWrite, LargeVCF_ALL_CHR20) {
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	std::chrono::duration<double> elapsed_seconds;
 	sph_umich_edu::HVCF hvcf;
