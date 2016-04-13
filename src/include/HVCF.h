@@ -173,6 +173,8 @@ public:
 	void compute_ld(const string& chromosome, const string& subset, unsigned long long int start_position, unsigned long long int end_position, vector<variants_pair>& result) throw (HVCFReadException);
 	void compute_ld(const string& chromosome, const string& subset, const string& lead_variant_name, unsigned long long int start_position, unsigned long long int end_position, vector<variants_pair>& result) throw (HVCFReadException);
 	void extract_variants(const string& chromosome, unsigned long long int start_position, unsigned long long int end_position, vector<variant_info>& result) throw (HVCFReadException);
+	void extract_haplotypes(const string& chromosome, const string& subset, const string& variant_name, vector<unsigned char>& result) throw (HVCFReadException);
+	void extract_haplotypes(const string& chromosome, const string& sample, unsigned long long int start_position, unsigned long long int end_position, vector<unsigned char>& result) throw (HVCFReadException);
 
 	unsigned int get_n_opened_objects() const;
 	static unsigned int get_n_all_opened_objects();

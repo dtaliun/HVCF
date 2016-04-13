@@ -20,9 +20,9 @@ def get_populations():
    j = jsonify(result)
    return j
 
-@app.route('/populations/<name>', methods = ['GET'])
-def get_samples_in_population(name):
-   names = hvcf.get_samples_in_subset(str(name))
+@app.route('/populations/<population>', methods = ['GET'])
+def get_samples_in_population(population):
+   names = hvcf.get_samples_in_subset(str(population))
    result = { 'names': [name for name in names] }
    j = jsonify(result)
    return j
@@ -34,29 +34,29 @@ def get_chromosomes():
    j = jsonify(result)
    return j
 
-@app.route('/chromosomes/<name>', methods = ['GET'])
-def get_chromosome(name):
-   if hvcf.has_chromosome(str(name)):
-      n_variants = hvcf.get_n_variants_in_chromosome(str(name))
-      start = hvcf.get_chromosome_start(str(name))
-      end = hvcf.get_chromosome_end(str(name))
-      result = { 'name': name, 'n_variants': n_variants, 'first_variant_bp': start, 'last_variant_bp': end } 
+@app.route('/chromosomes/<chromosome>', methods = ['GET'])
+def get_chromosome(chromosome):
+   if hvcf.has_chromosome(str(chromosome)):
+      n_variants = hvcf.get_n_variants_in_chromosome(str(chromosome))
+      start = hvcf.get_chromosome_start(str(chromosome))
+      end = hvcf.get_chromosome_end(str(chromosome))
+      result = { 'name': chromosome, 'n_variants': n_variants, 'first_variant_bp': start, 'last_variant_bp': end } 
    else:
       result = {}
    j = jsonify(result)
    return j
 
-@app.route('/chromosomes/<name>/variants', methods = ['GET'])
-def get_variants_in_region(name):
+@app.route('/chromosomes/<chromosome>/variants', methods = ['GET'])
+def get_variants_in_region(chromosome):
    start = request.args['start']
    end = request.args['end']
 
    variants = PyHVCF.VariantsVector()
    
-   hvcf.extract_variants(str(name), long(start), long(end), variants)
+   hvcf.extract_variants(str(chromosome), long(start), long(end), variants)
 
    result = {
-      'chromosome': [str(name)] * len(variants),
+      'chromosome': [str(chromosome)] * len(variants),
       'variant': [None] * len(variants),
       'alt': [None] * len(variants),
       'ref': [None] * len(variants),
@@ -73,9 +73,37 @@ def get_variants_in_region(name):
 
    return j
 
-@app.route('/chromosomes/<name>/af', methods = ['GET'])
-def get_af_in_region(name):
+@app.route('/chromosomes/<chromosome>/af', methods = ['GET'])
+def get_af_in_region(chromosome):
    return 'af'
+
+@app.route('/chromosomes/<chromosome>/<population>/haplotypes', methods = ['GET'])
+def get_variant_haplotypes(chromosome, population):
+   variant = request.args['variant']
+
+   haplotypes = PyHVCF.UCharVector()
+   
+   hvcf.extract_haplotypes(str(chromosome), str(population), str(variant), haplotypes)
+
+   result = { 'haplotypes' : [allele for allele in haplotypes] }
+   j = jsonify(result)
+
+   return j
+
+@app.route('/chromosomes/<chromosome>/haplotypes', methods = ['GET'])
+def get_sample_haplotypes(chromosome):
+   sample = request.args['sample']
+   start = request.args['start']
+   end = request.args['end']
+
+   haplotypes = PyHVCF.UCharVector()
+   
+   hvcf.extract_haplotypes(str(chromosome), str(sample), long(start), long(end), haplotypes)  
+
+   result = { 'haploptypes' : [allele for allele in haplotypes] }
+   j = jsonify(result)
+
+   return j
 
 @app.route('/chromosomes/<chromosome>/<population>/ld', methods = ['GET'])
 def get_ld_in_region(chromosome, population):

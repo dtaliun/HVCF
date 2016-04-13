@@ -16,6 +16,8 @@ void translator(const HVCFException& e) {
 
 void (HVCF::*compute_region_ld)(const string& chromosome, const string& subset, unsigned long long int start_position, unsigned long long end_position, vector<variants_pair>& result) = &HVCF::compute_ld;
 void (HVCF::*compute_lead_ld)(const string& chromosome, const string& subset, const string& lead_variant_name, unsigned long long int start_position, unsigned long long end_position, vector<variants_pair>& result) = &HVCF::compute_ld;
+void (HVCF::*extract_haplotypes_for_variant)(const string& chromosome, const string& subset, const string& variant_name, vector<unsigned char>& result) = &HVCF::extract_haplotypes;
+void (HVCF::*extract_haplotypes_for_sample)(const string& chromosome, const string& sample, unsigned long long int start, unsigned long long int end, vector<unsigned char>& result) = &HVCF::extract_haplotypes;
 
 BOOST_PYTHON_MODULE(PyHVCF)
 {
@@ -41,6 +43,10 @@ BOOST_PYTHON_MODULE(PyHVCF)
 
 	class_<vector<string>>("NamesVector")
 			.def(vector_indexing_suite<std::vector<std::string>>())
+		;
+
+	class_<vector<unsigned char>>("UCharVector")
+			.def(vector_indexing_suite<std::vector<unsigned char>>())
 		;
 
 	class_<vector<variant_info>>("VariantsVector")
@@ -72,6 +78,8 @@ BOOST_PYTHON_MODULE(PyHVCF)
 			.def("compute_ld", compute_region_ld)
 			.def("compute_ld", compute_lead_ld)
 			.def("extract_variants", &HVCF::extract_variants)
+			.def("extract_haplotypes", extract_haplotypes_for_variant)
+			.def("extract_haplotypes", extract_haplotypes_for_sample)
 			.def("get_n_opened_objects", &HVCF::get_n_opened_objects)
 		;
 }
