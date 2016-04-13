@@ -14,6 +14,10 @@ def load_populations(file_name):
       line = infile.readline()
       for line in infile:
          sample, subpop, pop, gender = line.rstrip().split('\t')
+         if subpop not in populations:
+            populations[subpop] = PyHVCF.NamesVector()
+         populations.get(subpop).append(sample)         
+
          if pop not in populations:
             populations[pop] = PyHVCF.NamesVector()
          populations.get(pop).append(sample)
