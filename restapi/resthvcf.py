@@ -23,7 +23,7 @@ def get_populations():
 @app.route('/populations/<population>', methods = ['GET'])
 def get_samples_in_population(population):
    names = hvcf.get_samples_in_subset(str(population))
-   result = { 'names': [name for name in names] }
+   result = { 'samples': [name for name in names] }
    j = jsonify(result)
    return j
 
@@ -40,7 +40,7 @@ def get_chromosome(chromosome):
       n_variants = hvcf.get_n_variants_in_chromosome(str(chromosome))
       start = hvcf.get_chromosome_start(str(chromosome))
       end = hvcf.get_chromosome_end(str(chromosome))
-      result = { 'name': chromosome, 'n_variants': n_variants, 'first_variant_bp': start, 'last_variant_bp': end } 
+      result = { 'n_variants': n_variants, 'first_variant_bp': start, 'last_variant_bp': end } 
    else:
       result = {}
    j = jsonify(result)
@@ -73,8 +73,15 @@ def get_variants_in_region(chromosome):
 
    return j
 
-@app.route('/chromosomes/<chromosome>/af', methods = ['GET'])
-def get_af_in_region(chromosome):
+@app.route('/chromosomes/<chromosome>/<population>/af', methods = ['GET'])
+def get_af_in_region(chromosome, population):
+   start = request.args['start']
+   end = request.args['end']
+
+   frequencies = None   
+
+   hvcf.compute_frequencies(str(chromosome), str(population), long(start), long(end), frequencies)
+
    return 'af'
 
 @app.route('/chromosomes/<chromosome>/<population>/haplotypes', methods = ['GET'])

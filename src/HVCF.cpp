@@ -536,7 +536,7 @@ void HVCF::cache_intervals_index_bucket(hid_t group_id, interval_index_entry_typ
 
 void HVCF::write_intervals_index_buckets(hid_t group_id, vector<ull_index_entry_type>& buckets_cache) throw (HVCFWriteException) {
 	if (buckets_cache.size() == 0u) {
-		throw HVCFWriteException(__FILE__, __FUNCTION__, __LINE__, "Empty list of offsets");
+		return;
 	}
 
 	HDF5GroupIdentifier index_group_id;
@@ -1225,7 +1225,7 @@ void HVCF::create_chromosome_indices(hid_t chromosome_group_id) throw (HVCFWrite
 		hash_index_keys[i].bucket_size = 0;
 	}
 	hash_bucket.reserve(1000);
-	hash_buckets_cache.reserve(100001);
+	hash_buckets_cache.reserve(200000);
 
 	for (auto&& bucket_offsets : names_index_buckets) {
 		read_variant_names_into_bucket(chromosome_group_id, bucket_offsets.second, hash_bucket);
@@ -1243,7 +1243,7 @@ void HVCF::create_chromosome_indices(hid_t chromosome_group_id) throw (HVCFWrite
 	vector<ull_index_entry_type> intervals_bucket;
 	vector<ull_index_entry_type> intervals_buckets_cache;
 	intervals_bucket.reserve(1000);
-	intervals_buckets_cache.reserve(100001);
+	intervals_buckets_cache.reserve(200000);
 
 	for (unsigned int i = 0; i < intervals.size(); ++i) {
 		read_positions_into_bucket(chromosome_group_id, intervals[i], intervals_bucket);
@@ -3245,6 +3245,118 @@ void HVCF::compute_ld(const string& chromosome, const string& subset, const stri
 	}
 
 	return;
+}
+
+void HVCF::compute_frequencies(const string& chromosome, const string& subset, unsigned long long int start_position, unsigned long long int end_position, vector<double>& result) throw (HVCFReadException) {
+	std::chrono::time_point<std::chrono::system_clock> start, end;
+	std::chrono::duration<double> elapsed_seconds;
+
+	auto chromosomes_cache_it = chromosomes_cache.find(chromosome);
+	if (chromosomes_cache_it == chromosomes_cache.end()) {
+		return;
+	}
+
+	if (end_position < start_position) {
+		return;
+	}
+
+	long long int start_position_offset = 0;
+	long long int end_position_offset = 0;
+
+	if ((start_position_offset = get_variant_offset_by_position_eq(chromosome, start_position)) < 0) {
+		return;
+	}
+
+	if ((end_position_offset = get_variant_offset_by_position_eq(chromosome, end_position)) < 0) {
+		return;
+	}
+
+	start = std::chrono::system_clock::now();
+
+	auto subsets_cache_it = samples_cache.subsets.find(subset);
+
+	if (subsets_cache_it == samples_cache.subsets.end()) {
+		return;
+	}
+
+	HDF5DataspaceIdentifier file_dataspace_id;
+	HDF5DataspaceIdentifier memory_dataspace_id;
+
+	hsize_t n_samples = subsets_cache_it->second.n_samples;
+	hsize_t n_haplotypes = 2 * n_samples;
+
+	hsize_t n_variants = end_position_offset - start_position_offset + 1;
+
+	hsize_t file_offset_2D[2]{static_cast<hsize_t>(start_position_offset), 0};
+	hsize_t counts_2D[2]{n_variants, 0};
+	hsize_t mem_dims_2D[2]{n_variants, n_haplotypes};
+
+//	unique_ptr<double[]> haplotypes = unique_ptr<double[]>(new double[n_variants * n_haplotypes]);
+
+	unique_ptr<unsigned char[]> haplotypes = unique_ptr<unsigned char[]>(new unsigned char[n_variants * n_haplotypes]);
+
+	if ((file_dataspace_id = H5Dget_space(chromosomes_cache_it->second->haplotypes_id)) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while getting dataspace.");
+	}
+
+	if ((memory_dataspace_id = H5Screate_simple(2, mem_dims_2D, nullptr)) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while creating memory dataspace.");
+	}
+
+	if (H5Sselect_none(file_dataspace_id) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while making selection in dataspace.");
+	}
+
+	for (auto& chunk : subsets_cache_it->second.chunks) {
+		file_offset_2D[1] = 2 * get<0>(chunk);
+		counts_2D[1] = 2 * get<2>(chunk);
+
+		if (H5Sselect_hyperslab(file_dataspace_id, H5S_SELECT_OR, file_offset_2D, NULL, counts_2D, NULL) < 0) {
+			throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while making selection in dataspace.");
+		}
+	}
+
+	if (H5Dread(chromosomes_cache_it->second->haplotypes_id, H5T_NATIVE_UCHAR, memory_dataspace_id, file_dataspace_id, H5P_DEFAULT, haplotypes.get()) < 0) {
+		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while reading from dataset");
+	}
+
+	file_dataspace_id.close();
+	memory_dataspace_id.close();
+
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	cout << "Retrieved haplotypes in " << elapsed_seconds.count() << " seconds" << endl;
+
+//	start = std::chrono::system_clock::now();
+//	if (H5Tconvert(H5T_NATIVE_UCHAR, H5T_NATIVE_DOUBLE, n_variants * n_haplotypes, haplotypes.get(), nullptr, H5P_DEFAULT) < 0) {
+//		throw HVCFReadException(__FILE__, __FUNCTION__, __LINE__, "Error while converting datatypes.");
+//	}
+//	end = std::chrono::system_clock::now();
+//	elapsed_seconds = end - start;
+//	cout << "Type-casted haplotypes in " << elapsed_seconds.count() << " seconds" << endl;
+
+	start = std::chrono::system_clock::now();
+
+	vector<double> freqs;
+	freqs.assign(n_variants, 0.0);
+	for (unsigned int i = 0u; i < n_variants; ++i) {
+		for (unsigned int j = i * n_haplotypes; j < i * n_haplotypes + n_haplotypes; ++j) {
+			freqs[i] += static_cast<double>(haplotypes[j]);
+		}
+	}
+	for (unsigned int i = 0u; i < n_variants; ++i) {
+		freqs[i] /= n_haplotypes;
+	}
+
+
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	cout << "Computed frequencies in " << elapsed_seconds.count() << " seconds (" << n_variants << ")" << endl;
+
+//	for (unsigned int i = 0u; i < freqs.size(); ++i) {
+//		cout << freqs[i] << endl;
+//	}
+
 }
 
 void HVCF::extract_variants(const string& chromosome, unsigned long long int start_position, unsigned long long int end_position, vector<variant_info>& result) throw (HVCFReadException) {

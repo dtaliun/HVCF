@@ -143,7 +143,7 @@ protected:
 	}
 };
 
-TEST_F(HVCFTestLD, DISABLED_LD_EUR_SINGLE_FILE) {
+TEST_F(HVCFTestLD, LD_EUR_SINGLE_FILE) {
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	std::chrono::duration<double> elapsed_seconds;
 	sph_umich_edu::HVCF hvcf;
@@ -366,7 +366,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_EUR_SINGLE_FILE) {
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTestLD, DISABLED_LD_EUR_SUBSET) {
+TEST_F(HVCFTestLD, LD_EUR_SUBSET) {
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	std::chrono::duration<double> elapsed_seconds;
 	sph_umich_edu::HVCF hvcf;
@@ -594,7 +594,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_EUR_SUBSET) {
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTestLD, DISABLED_LD_ALL) {
+TEST_F(HVCFTestLD, LD_ALL) {
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	std::chrono::duration<double> elapsed_seconds;
 	sph_umich_edu::HVCF hvcf;
@@ -823,7 +823,7 @@ TEST_F(HVCFTestLD, DISABLED_LD_ALL) {
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTestLD, DISABLED_LargeLD) {
+TEST_F(HVCFTestLD, LargeLD) {
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	std::chrono::duration<double> elapsed_seconds;
 	sph_umich_edu::HVCF hvcf;
@@ -832,7 +832,7 @@ TEST_F(HVCFTestLD, DISABLED_LargeLD) {
 	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
-	hvcf.open("test_large.h5");
+	hvcf.open("test_large_eur_chr20.h5");
 	ASSERT_EQ(13u, hvcf.get_n_opened_objects());
 	ASSERT_EQ(18u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 
@@ -887,7 +887,7 @@ TEST_F(HVCFTestLD, DISABLED_LargeLD) {
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTestLD, DISABLED_LargeVCF_ALL_CHR20) {
+TEST_F(HVCFTestLD, LargeVCF_ALL_CHR20) {
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	std::chrono::duration<double> elapsed_seconds;
 	sph_umich_edu::HVCF hvcf;
