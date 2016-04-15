@@ -61,7 +61,7 @@ protected:
 	}
 };
 
-TEST_F(HVCFTestReadWrite, ImportVCF_ALL) {
+TEST_F(HVCFTestReadWrite, DISABLED_ImportVCF_ALL) {
 	{ // 'dummy' scope to check if HVCF object closes every opened HDF5 identifier on its destruction
 		sph_umich_edu::HVCF hvcf;
 
@@ -134,15 +134,12 @@ TEST_F(HVCFTestReadWrite, ImportVCF_ALL) {
 	ASSERT_EQ(9959u, hvcf.get_n_variants_in_chromosome("22"));
 	ASSERT_EQ(27u, hvcf.get_n_opened_objects());
 
-	vector<double> result;
-	hvcf.compute_frequencies("20", "ALL", 60343, 372328, result);
-
 	hvcf.close();
 	ASSERT_EQ(0u, hvcf.get_n_opened_objects());
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTestReadWrite, ImportVCFbyChromosome_ALL) {
+TEST_F(HVCFTestReadWrite, DISABLED_ImportVCFbyChromosome_ALL) {
 	{ // 'dummy' scope to check if HVCF object closes every opened HDF5 identifier on its destruction
 		sph_umich_edu::HVCF hvcf;
 
@@ -225,7 +222,7 @@ TEST_F(HVCFTestReadWrite, ImportVCFbyChromosome_ALL) {
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTestReadWrite, ImportVCF_EUR) {
+TEST_F(HVCFTestReadWrite, DISABLED_ImportVCF_EUR) {
 	{ // 'dummy' scope to check if HVCF object closes every opened HDF5 identifier on its destruction
 		sph_umich_edu::HVCF hvcf;
 
@@ -284,7 +281,7 @@ TEST_F(HVCFTestReadWrite, ImportVCF_EUR) {
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTestReadWrite, ImportVCFbyChromosome_EUR) {
+TEST_F(HVCFTestReadWrite, DISABLED_ImportVCFbyChromosome_EUR) {
 	{ // 'dummy' scope to check if HVCF object closes every opened HDF5 identifier on its destruction
 		sph_umich_edu::HVCF hvcf;
 
@@ -345,7 +342,7 @@ TEST_F(HVCFTestReadWrite, ImportVCFbyChromosome_EUR) {
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTestReadWrite, VariantLookupByPosition) {
+TEST_F(HVCFTestReadWrite, DISABLED_VariantLookupByPosition) {
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	std::chrono::duration<double> elapsed_seconds;
 	sph_umich_edu::HVCF hvcf;
@@ -541,7 +538,7 @@ TEST_F(HVCFTestReadWrite, VariantLookupByPosition) {
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTestReadWrite, VariantLookupByName) {
+TEST_F(HVCFTestReadWrite, DISABLED_VariantLookupByName) {
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	std::chrono::duration<double> elapsed_seconds;
 	sph_umich_edu::HVCF hvcf;
@@ -589,7 +586,7 @@ TEST_F(HVCFTestReadWrite, VariantLookupByName) {
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTestReadWrite, LargeVCF_EUR_CHR20) {
+TEST_F(HVCFTestReadWrite, DISABLED_LargeVCF_EUR_CHR20) {
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	std::chrono::duration<double> elapsed_seconds;
 	sph_umich_edu::HVCF hvcf;
@@ -792,7 +789,7 @@ TEST_F(HVCFTestReadWrite, LargeVCF_EUR_CHR20) {
 	ASSERT_EQ(0u, sph_umich_edu::HVCF::get_n_all_opened_objects());
 }
 
-TEST_F(HVCFTestReadWrite, LargeVCF_ALL_CHR20) {
+TEST_F(HVCFTestReadWrite, DISABLED_LargeVCF_ALL_CHR20) {
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	std::chrono::duration<double> elapsed_seconds;
 	sph_umich_edu::HVCF hvcf;

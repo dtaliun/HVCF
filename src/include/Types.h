@@ -68,23 +68,39 @@ typedef struct {
 	HDF5DatasetIdentifier haplotypes_id;
 } chromosomes_cache_entry;
 
-typedef struct VariantInfo {
+typedef struct VariantQueryResult {
 	string name;
 	string ref;
 	string alt;
 	unsigned long long int position;
 
-	VariantInfo(const char* name, const char* ref, const char* alt, unsigned long long int position) :
+	VariantQueryResult(const char* name, const char* ref, const char* alt, unsigned long long int position) :
 		name(name), ref(ref), alt(alt), position(position) {
 	}
 
-	bool operator==(VariantInfo const& info) const { // needed for boost.python
-		return (position == info.position && position == info.position);
+	bool operator==(VariantQueryResult const& result) const { // needed for boost.python
+		return (position == result.position && position == result.position && name.compare(result.name) == 0);
+	}
+} variant_query_result;
+
+typedef struct FrequencyQueryResult {
+	string name;
+	string ref;
+	string alt;
+	unsigned long long int position;
+	double ref_af;
+	double alt_af;
+
+	FrequencyQueryResult(const char* name, const char* ref, const char* alt, unsigned long long int position, double ref_af, double alt_af) :
+		name(name), ref(ref), alt(alt), position(position), ref_af(ref_af), alt_af(alt_af) {
 	}
 
-} variant_info;
+	bool operator==(FrequencyQueryResult const& result) const { // needed for boost.python
+		return (position == result.position && position == result.position && name.compare(result.name) == 0);
+	}
+} frequency_query_result;
 
-typedef struct VariantsPair{
+typedef struct LDQueryResult{
 	string name1;
 	unsigned long long int position1;
 	string name2;
@@ -92,17 +108,61 @@ typedef struct VariantsPair{
 	double r;
 	double rsquare;
 
-	VariantsPair(const char* name1, unsigned long int position1,
+	LDQueryResult() : name1(""), position1(0ul), name2(""), position2(0ul), r(0.0), rsquare(0.0) {
+
+	}
+
+	LDQueryResult(const char* name1, unsigned long int position1,
 			const char* name2, unsigned long int position2, double r, double rsquare) :
 				name1(name1), position1(position1), name2(name2), position2(position2), r(r), rsquare(rsquare) {
 
 	}
 
-	bool operator==(VariantsPair const& pair) const { // needed for boost.python
-		return (position1 == pair.position1 && position2 == pair.position2);
+	bool operator==(LDQueryResult const& result) const { // needed for boost.python
+		return (position1 == result.position1 && position2 == result.position2 &&
+				name1.compare(result.name1) == 0 && name2.compare(result.name2) == 0);
 	}
 
-} variants_pair;
+} ld_query_result;
+
+typedef struct VariantHaplotypesQueryResult {
+	string sample;
+	unsigned char allele1;
+	unsigned char allele2;
+
+	VariantHaplotypesQueryResult() : sample(""), allele1(0), allele2(0) {
+
+	}
+
+	VariantHaplotypesQueryResult(const char* sample, unsigned char allele1, unsigned char allele2) :
+		sample(sample), allele1(allele1), allele2(allele2) {
+	}
+
+	bool operator==(VariantHaplotypesQueryResult const& result) const { // needed for boost.python
+		return (sample.compare(result.sample) == 0);
+	}
+} variant_haplotypes_query_result;
+
+typedef struct SampleHaplotypesQueryResult {
+	string name;
+	unsigned long long position;
+	unsigned char allele1;
+	unsigned char allele2;
+
+	SampleHaplotypesQueryResult() : name(""), position(0ul), allele1(0), allele2(0) {
+
+	}
+
+	SampleHaplotypesQueryResult(const char* name, unsigned long long int position, unsigned char allele1, unsigned char allele2) :
+		name(name), position(position), allele1(allele1), allele2(allele2) {
+
+	}
+
+	bool operator==(SampleHaplotypesQueryResult const& result) const { // needed for boost.python
+		return (position == result.position && name.compare(result.name) == 0);
+	}
+
+} sample_haplotypes_query_result;
 
 }
 
